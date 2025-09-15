@@ -1,35 +1,72 @@
 import { Request, Response } from "express";
-import { createJob, getAllJobs, getJobById, Job } from "../models/jobModels";
+import pool from "../config/db";
 
-// Create a new job
-export const addJob = async (req: Request, res: Response) => {
+export const getJobs = async (req: Request, res: Response) => {
+  const { title, location } = req.query;
   try {
-    const { title, description, location } = req.body as Job;
-    const job = await createJob({ title, description, location });
-    res.status(201).json(job);
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error", error });
+    let query = "SELECT * FROM jobs WHERE 1=1";
+    const params: any[] = [];
+
+    if (title) {
+      params.push(`%${title}%`);
+      query += ` AND title ILIKE $${params.length}`;
+    }
+    if (location) {
+      params.push(`%${location}%`);
+      query += ` AND location ILIKE $${params.length}`;
+    }
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
   }
 };
 
-// Get all jobs
-export const listJobs = async (_req: Request, res: Response) => {
+export const getJobById = async (req: Request, res: Response) => {
   try {
-    const jobs = await getAllJobs();
-    res.json(jobs);
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error", error });
+    const result = await pool.query("SELECT * FROM jobs WHERE id=$1", [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: "Job not found" });
+    res.json(result.rows[0]);
+  } catch {
+    res.status(500).json({ error: "Server error" });
   }
 };
 
-// Get single job by ID
-export const getJob = async (req: Request, res: Response) => {
+export const createJob = async (req: Request, res: Response) => {
+  const { title, company, location, description } = req.body;
+  const user = req.user as { id: number };
   try {
-    const id = parseInt(req.params.id ?? "");
-    const job = await getJobById(id);
-    if (!job) return res.status(404).json({ message: "Job not found" });
-    res.json(job);
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error", error });
+    const result = await pool.query(
+      "INSERT INTO jobs (title, company, location, description, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING *",
+      [title, company, location, description, user.id]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch {
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const updateJob = async (req: Request, res: Response) => {
+  const { title, company, location, description } = req.body;
+  try {
+    const result = await pool.query(
+      "UPDATE jobs SET title=$1, company=$2, location=$3, description=$4 WHERE id=$5 RETURNING *",
+      [title, company, location, description, req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: "Job not found" });
+    res.json(result.rows[0]);
+  } catch {
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const deleteJob = async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query("DELETE FROM jobs WHERE id=$1 RETURNING *", [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: "Job not found" });
+    res.json({ message: "Job deleted successfully" });
+  } catch {
+    res.status(500).json({ error: "Server error" });
   }
 };

@@ -1,15 +1,22 @@
 import { Router } from "express";
-import { addJob, listJobs, getJob } from "../controllers/jobController";
+import { requireAuth, requireRole } from "../middleware/auth";
+import {
+  getJobs,
+  getJobById,
+  createJob,
+  updateJob,
+  deleteJob,
+} from "../controllers/jobController";
 
 const router = Router();
 
-// POST /jobs
-router.post("/", addJob);
+// Public
+router.get("/", getJobs);
+router.get("/:id", getJobById);
 
-// GET /jobs
-router.get("/", listJobs);
-
-// GET /jobs/:id
-router.get("/:id", getJob);
+// Admin only
+router.post("/", requireAuth, requireRole("admin"), createJob);
+router.put("/:id", requireAuth, requireRole("admin"), updateJob);
+router.delete("/:id", requireAuth, requireRole("admin"), deleteJob);
 
 export default router;

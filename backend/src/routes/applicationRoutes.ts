@@ -1,19 +1,18 @@
 import { Router } from "express";
+import { requireAuth, requireRole } from "../middleware/auth";
 import {
-  applyJob,
-  listApplicationsByUser,
-  listApplicationsByJob,
+  applyForJob,
+  getApplicationsByJob,
+  updateApplicationStatus,
 } from "../controllers/applicationController";
 
 const router = Router();
 
-// POST /applications
-router.post("/", applyJob);
+// User applies
+router.post("/:jobId/apply", requireAuth, requireRole("user"), applyForJob);
 
-// GET /applications/user/:user_id
-router.get("/user/:user_id", listApplicationsByUser);
-
-// GET /applications/job/:job_id
-router.get("/job/:job_id", listApplicationsByJob);
+// Admin manages
+router.get("/job/:jobId", requireAuth, requireRole("admin"), getApplicationsByJob);
+router.patch("/:id/status", requireAuth, requireRole("admin"), updateApplicationStatus);
 
 export default router;

@@ -1,4 +1,4 @@
-import pool from "../db";
+import pool from "../config/db";
 
 export interface Job {
   id?: number;

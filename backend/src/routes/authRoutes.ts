@@ -1,12 +1,20 @@
 import { Router } from "express";
+import passport from "../config/passport";
+import { register, login, googleCallback } from "../controllers/authController";
+
 const router = Router();
 
-router.post("/login", (req, res) => {
-  res.json({ message: "login route" });
-});
+// Email + password
+router.post("/register", register);
+router.post("/login", login);
 
-router.post("/register", (req, res) => {
-  res.json({ message: "register route" });
-});
+// Google OAuth
+router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false, failureRedirect: "/login" }),
+  googleCallback
+);
 
 export default router;
