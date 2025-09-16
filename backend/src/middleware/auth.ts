@@ -1,14 +1,20 @@
 import passport from "../config/passport";
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 
+// Require authentication with JWT
 export const requireAuth = passport.authenticate("jwt", { session: false });
 
+// Require a specific role
 export const requireRole = (role: string) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as { id: number; role: string };
-    if (!user || user.role !== role) {
-      return res.status(403).json({ error: "Forbidden" });
+  return (req: any, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized: No user" });
     }
+
+    if (req.user.role !== role) {
+      return res.status(403).json({ error: "Forbidden: Insufficient role" });
+    }
+
     next();
   };
 };

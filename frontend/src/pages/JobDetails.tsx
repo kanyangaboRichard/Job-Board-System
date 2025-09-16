@@ -1,0 +1,85 @@
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
+
+interface Job {
+  id: number;
+  title: string;
+  location: string;
+  description: string;
+}
+
+const JobDetails: React.FC = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const [job, setJob] = useState<Job | null>(null);
+
+  useEffect(() => {
+    const fetchJob = async () => {
+      try {
+        const res = await fetch(`http://localhost:3005/jobs/${id}`);
+        const data = await res.json();
+        setJob(data);
+      } catch (err) {
+        console.error("Failed to fetch job", err);
+      }
+    };
+
+    fetchJob();
+  }, [id]);
+
+  if (!job) {
+    return (
+      <div className="container mt-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="mt-3 text-muted">Loading job details...</p>
+      </div>
+    );
+  }
+
+  const handleApply = () => {
+    if (user) {
+      navigate(`/apply/${id}`);
+    } else {
+      navigate(`/login?redirect=/apply/${id}`);
+    }
+  };
+
+  return (
+    <div className="container mt-5">
+      <div className="card shadow-lg">
+        <div className="card-body">
+          {/* Job Title */}
+          <h2 className="card-title fw-bold">{job.title}</h2>
+          <h6 className="card-subtitle mb-3 text-muted">
+            📍 {job.location}
+          </h6>
+
+          {/* Job Description */}
+          <p className="card-text" style={{ whiteSpace: "pre-line" }}>
+            {job.description}
+          </p>
+
+          {/* Apply button */}
+          <button className="btn btn-success mt-3" onClick={handleApply}>
+            Apply Now
+          </button>
+
+          {/* Back button */}
+          <button
+            className="btn btn-outline-secondary mt-3 ms-2"
+            onClick={() => navigate(-1)}
+          >
+            ← Back to Jobs
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default JobDetails;
