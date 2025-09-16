@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import useAuth from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext"; // ✅ useAuth hook
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -15,11 +15,18 @@ const Login: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const googleToken = params.get("token");
+    const redirect = params.get("redirect") || "/";
+
     if (googleToken) {
-      login(googleToken); // 👈 use AuthContext login
-      navigate("/"); // redirect after login
+      const decoded = login(googleToken); // call login
+      if (decoded?.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate(redirect);
+      }
     }
-  }, [location, login, navigate]);
+    // ✅ only re-run when search string changes or navigate updates
+  }, [location.search, navigate]);
 
   // Email/Password login
   const handleLogin = async (e: React.FormEvent) => {
@@ -39,8 +46,16 @@ const Login: React.FC = () => {
         return;
       }
 
-      login(data.token); // 👈 decode + save user in context
-      navigate("/"); // redirect to home
+      // Save user + redirect by role
+      const decoded = login(data.token);
+      const params = new URLSearchParams(location.search);
+      const redirect = params.get("redirect") || "/";
+
+      if (decoded?.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate(redirect);
+      }
     } catch (err) {
       console.error("Login error:", err);
       setError("Network error, could not connect to server");
@@ -48,7 +63,9 @@ const Login: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:3005/auth/google";
+    // Keep track of where user wanted to go (redirect param)
+    const redirect = new URLSearchParams(location.search).get("redirect") || "/";
+    window.location.href = `http://localhost:3005/auth/google?redirect=${redirect}`;
   };
 
   return (
@@ -94,7 +111,10 @@ const Login: React.FC = () => {
               <div className="text-center my-3">OR</div>
 
               {/* Google Sign-In */}
-              <button onClick={handleGoogleLogin} className="btn btn-danger w-100">
+              <button
+                onClick={handleGoogleLogin}
+                className="btn btn-danger w-100"
+              >
                 <i className="bi bi-google me-2"></i> Sign in with Google
               </button>
             </div>

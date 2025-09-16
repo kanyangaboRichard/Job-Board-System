@@ -1,8 +1,7 @@
-import React, {
-  createContext,
-  useState,
-  useEffect,
-} from "react";
+/* eslint-disable react-refresh/only-export-components */
+
+
+import React, { createContext, useState, useEffect, useContext } from "react";
 import type { ReactNode } from "react";
 import { jwtDecode } from "jwt-decode";
 
@@ -12,20 +11,18 @@ interface TokenPayload {
   exp: number;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: { id: number; role: string } | null;
-  login: (token: string) => void;
+  login: (token: string) => { id: number; role: string } | null;
   logout: () => void;
 }
 
-// Create context
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+//  export the context
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Provider component
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<{ id: number; role: string } | null>(null);
 
-  // Check localStorage on app start
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -34,7 +31,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (decoded.exp * 1000 > Date.now()) {
           setUser({ id: decoded.id, role: decoded.role });
         } else {
-          localStorage.removeItem("token"); // expired
+          localStorage.removeItem("token");
         }
       } catch (err) {
         console.error("Invalid token", err);
@@ -43,14 +40,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  // Login function
   const login = (token: string) => {
     localStorage.setItem("token", token);
     const decoded = jwtDecode<TokenPayload>(token);
-    setUser({ id: decoded.id, role: decoded.role });
+    const newUser = { id: decoded.id, role: decoded.role };
+    setUser(newUser);
+    return newUser;
   };
 
-  // Logout function
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
@@ -63,4 +60,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
-export default AuthContext;
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
