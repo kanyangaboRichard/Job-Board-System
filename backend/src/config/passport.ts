@@ -5,7 +5,9 @@ import pool from "./db";
 
 const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
-// ---------- JWT Strategy ----------
+
+// JWT Strategy
+
 interface JwtPayload {
   id: number;
   role: string;
@@ -19,9 +21,13 @@ passport.use(
     },
     async (payload: JwtPayload, done) => {
       try {
-        const result = await pool.query("SELECT id, email, role FROM users WHERE id=$1", [payload.id]);
+        const result = await pool.query(
+          "SELECT id, email, role FROM users WHERE id=$1",
+          [payload.id]
+        );
         const user = result.rows[0];
         if (!user) return done(null, false);
+
         return done(null, { id: user.id, role: user.role });
       } catch (err) {
         return done(err, false);
@@ -30,29 +36,41 @@ passport.use(
   )
 );
 
-// ---------- Google Strategy ----------
+
+// Google Strategy
+
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:3005/auth/google/callback",
+      callbackURL:
+        process.env.GOOGLE_CALLBACK_URL ||
+        "http://localhost:3005/api/auth/google/callback", // matches backend
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // check if user exists
-        const email = profile.emails && profile.emails[0] ? profile.emails[0].value : undefined;
+        // Extract email from Google profile
+        const email =
+          profile.emails && profile.emails[0]
+            ? profile.emails[0].value
+            : undefined;
+
         if (!email) {
           return done(new Error("No email found in Google profile"), false);
         }
-        const result = await pool.query("SELECT * FROM users WHERE email=$1", [email]);
+
+        // Check if user already exists
+        const result = await pool.query("SELECT * FROM users WHERE email=$1", [
+          email,
+        ]);
         let user = result.rows[0];
 
         if (!user) {
-          // create new user if not found
+          // Create new user if not found
           const insert = await pool.query(
-            "INSERT INTO users (email, password_hash, role) VALUES ($1,$2,$3) RETURNING id, email, role",
-            [email, "", "user"]
+            "INSERT INTO users (email, password_hash, role, name) VALUES ($1,$2,$3,$4) RETURNING id, email, role, name",
+            [email, "", "user", profile.displayName || "Google User"]
           );
           user = insert.rows[0];
         }

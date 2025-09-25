@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // ✅ useAuth hook
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"user" | "admin">("user");
   const [error, setError] = useState<string | null>(null);
 
   const location = useLocation();
   const navigate = useNavigate();
-  const { login } = useAuth(); // from AuthContext
+  const { login } = useAuth();
 
   // Capture token from Google callback
   useEffect(() => {
@@ -18,15 +19,14 @@ const Login: React.FC = () => {
     const redirect = params.get("redirect") || "/";
 
     if (googleToken) {
-      const decoded = login(googleToken); // call login
+      const decoded = login(googleToken);
       if (decoded?.role === "admin") {
         navigate("/admin");
       } else {
         navigate(redirect);
       }
     }
-    // ✅ only re-run when search string changes or navigate updates
-  }, [location.search, navigate]);
+  }, [location.search, navigate, login]);
 
   // Email/Password login
   const handleLogin = async (e: React.FormEvent) => {
@@ -34,13 +34,14 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      const res = await fetch("http://localhost:3005/auth/login", {
+      const res = await fetch("http://localhost:3005/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, role }),
       });
 
       const data = await res.json();
+
       if (!res.ok) {
         setError(data.error || "Login failed");
         return;
@@ -58,14 +59,14 @@ const Login: React.FC = () => {
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("Network error, could not connect to server");
+      setError("Network error, could not connect to server!");
     }
   };
 
+  // Google login
   const handleGoogleLogin = () => {
-    // Keep track of where user wanted to go (redirect param)
     const redirect = new URLSearchParams(location.search).get("redirect") || "/";
-    window.location.href = `http://localhost:3005/auth/google?redirect=${redirect}`;
+    window.location.href = `http://localhost:3005/api/auth/google?redirect=${redirect}`;
   };
 
   return (
@@ -102,6 +103,21 @@ const Login: React.FC = () => {
                   />
                 </div>
 
+                {/* Role selector */}
+                <div className="mb-3">
+                  <label className="form-label">Role</label>
+                  <select
+                    className="form-select"
+                    value={role}
+                    onChange={(e) =>
+                      setRole(e.target.value as "user" | "admin")
+                    }
+                  >
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
                 <button type="submit" className="btn btn-primary w-100">
                   Login with Email
                 </button>
@@ -109,6 +125,13 @@ const Login: React.FC = () => {
 
               {/* Divider */}
               <div className="text-center my-3">OR</div>
+
+              {/* Register link */}
+              <div className="text-center my-3">
+                <Link to="/register" className="d-block">
+                  Don't have an account? Register
+                </Link>
+              </div>
 
               {/* Google Sign-In */}
               <button
