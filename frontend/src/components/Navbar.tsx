@@ -8,7 +8,7 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout(); // clears token + user
-    navigate("/login"); // redirect
+    navigate("/Dashboard"); // redirect
   };
 
   return (

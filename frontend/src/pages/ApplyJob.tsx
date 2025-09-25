@@ -6,7 +6,7 @@ import { useAuth } from "../context/useAuth";
 const ApplyJob: React.FC = () => {
   const { id } = useParams(); // jobId
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth();
 
   const [coverLetter, setCoverLetter] = useState("");
   const [cvLink, setCvLink] = useState("");
@@ -26,7 +26,7 @@ const ApplyJob: React.FC = () => {
       }
 
       const res = await fetch(
-        `http://localhost:3005/applications/${id}/apply`,
+        `http://localhost:3005/api/applications/${id}/apply`,
         {
           method: "POST",
           headers: {

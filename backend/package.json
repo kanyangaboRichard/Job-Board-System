@@ -8,7 +8,6 @@
     "build": "tsc",
     "start": "node dist/index.ts",
     "migrate": "ts-node src/migrate.ts"
-    
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -25,6 +24,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/helmet": "^0.0.48",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.1",
     "@types/passport": "^1.0.17",

@@ -19,7 +19,7 @@ const JobDetails: React.FC = () => {
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const res = await fetch(`http://localhost:3005/jobs/${id}`);
+        const res = await fetch(`http://localhost:3005/api/jobs/${id}`);
         const data = await res.json();
         setJob(data);
       } catch (err) {
@@ -56,7 +56,7 @@ const JobDetails: React.FC = () => {
           {/* Job Title */}
           <h2 className="card-title fw-bold">{job.title}</h2>
           <h6 className="card-subtitle mb-3 text-muted">
-            📍 {job.location}
+            {job.location}
           </h6>
 
           {/* Job Description */}
