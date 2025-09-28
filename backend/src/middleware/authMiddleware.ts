@@ -2,30 +2,54 @@ import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET || typeof JWT_SECRET !== "string") throw new Error("JWT_SECRET is not defined");
+if (!JWT_SECRET || typeof JWT_SECRET !== "string") {
+  throw new Error("JWT_SECRET is not defined");
+}
 
 export interface AuthRequest extends Request {
   user?: { id: number; role: string };
 }
 
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const authHeader = req.headers.authorization;
+
+    // Check if header is missing or malformed
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Unauthorized: No token provided" });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
     }
 
+    // Extract the token safely
     const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: No token found" });
+    }
 
-    if (!decoded || typeof decoded.id !== "number" || typeof decoded.role !== "string") {
+    // Verify token
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+
+    // Validate payload
+    if (
+      !decoded ||
+      typeof decoded !== "object" ||
+      typeof decoded.id !== "number" ||
+      typeof decoded.role !== "string"
+    ) {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
+    // Attach user info to request
     req.user = { id: decoded.id, role: decoded.role };
+
     next();
   } catch (err) {
-    console.error(err);
+    console.error("Auth error:", err);
     res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
 };
