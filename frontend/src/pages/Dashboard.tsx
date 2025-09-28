@@ -12,7 +12,7 @@ interface Job {
 interface DecodedToken {
   id: number;
   role: string;
-  name?: string; // 
+  name?: string; 
   exp: number;
 }
 
