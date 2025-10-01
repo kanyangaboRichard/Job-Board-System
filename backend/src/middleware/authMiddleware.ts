@@ -10,7 +10,10 @@ export interface AuthRequest extends Request {
   user?: { id: number; role: string };
 }
 
-export const authenticate = (
+/**
+ *  Middleware: Authenticate user
+ */
+export const requireAuth = (
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -18,38 +21,48 @@ export const authenticate = (
   try {
     const authHeader = req.headers.authorization;
 
-    // Check if header is missing or malformed
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res
         .status(401)
-        .json({ message: "Unauthorized: No token provided" });
+        .json({ error: "Unauthorized: No token provided" });
     }
 
-    // Extract the token safely
     const token = authHeader.split(" ")[1];
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized: No token found" });
+      return res.status(401).json({ error: "Unauthorized: Token missing" });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
 
-    // Validate payload
     if (
       !decoded ||
       typeof decoded !== "object" ||
       typeof decoded.id !== "number" ||
       typeof decoded.role !== "string"
     ) {
-      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+      return res.status(401).json({ error: "Unauthorized: Invalid token" });
     }
 
-    // Attach user info to request
     req.user = { id: decoded.id, role: decoded.role };
 
     next();
   } catch (err) {
     console.error("Auth error:", err);
-    res.status(401).json({ message: "Unauthorized: Invalid token" });
+    return res.status(401).json({ error: "Unauthorized: Invalid token" });
   }
+};
+
+/**
+ * Middleware: Role-based access
+ */
+export const requireRole = (role: string) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized: No user" });
+    }
+    if (req.user.role !== role) {
+      return res.status(403).json({ error: "Forbidden: Insufficient role" });
+    }
+    next();
+  };
 };
