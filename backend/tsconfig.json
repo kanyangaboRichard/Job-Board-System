@@ -23,7 +23,8 @@
     /* Source Maps & Declarations */
     "sourceMap": true,                      // Generate source maps for debugging
     "declaration": true,                    // Generate .d.ts files
-    "declarationMap": true                  // Map .d.ts to original TS
+    "declarationMap": true,                 // Map .d.ts to original TS
+    "typeRoots": ["./src/types", "./node_modules/@types"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
