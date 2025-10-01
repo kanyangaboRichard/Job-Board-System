@@ -5,7 +5,7 @@ export interface Application {
   user_id: number;
   job_id: number;
   resume_url: string;
-  created_at?: Date;
+  applied_at?: Date;
 }
 
 export const createApplication = async (app: Application): Promise<Application> => {
