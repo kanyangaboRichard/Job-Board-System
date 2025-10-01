@@ -1,6 +1,7 @@
-// index.ts or app.ts
+// app.ts
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import passport from "./config/passport";
 
 import authRoutes from "./routes/authRoutes";
@@ -9,29 +10,33 @@ import applicationRoutes from "./routes/applicationRoutes";
 
 const app = express();
 
-// -------------------
-// Middleware
-// -------------------
-app.use(express.json());
 
-// ✅ Allow frontend (React/Vite) to connect
+// Middleware
+
+app.use(express.json());
+app.use(cookieParser()); //parse cookies so JWT/session cookies work
+
+//  Allow frontend (React/Vite) to connect
 app.use(
   cors({
-    origin: "http://localhost:3001", // your frontend URL
-    credentials: true,               // allow cookies/credentials if needed
+    origin: "http://localhost:3001", // frontend
+    credentials: true,
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"], //for Bearer tokens
   })
 );
 
+
 app.use(passport.initialize());
 
-// -------------------
+
 // Health check
-// -------------------
+
 app.get("/health", (_, res) => res.json({ ok: true }));
 
-// -------------------
+
 // Routes with /api prefix
-// -------------------
+
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
