@@ -1,7 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
 
-
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
 import type { ReactNode } from "react";
 import { jwtDecode } from "jwt-decode";
 
@@ -17,12 +22,12 @@ export interface AuthContextType {
   logout: () => void;
 }
 
-//  export the context
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<{ id: number; role: string } | null>(null);
 
+  // Restore session on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -40,18 +45,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = (token: string) => {
+  // ✅ Memoized login function
+  const login = useCallback((token: string) => {
     localStorage.setItem("token", token);
     const decoded = jwtDecode<TokenPayload>(token);
     const newUser = { id: decoded.id, role: decoded.role };
     setUser(newUser);
     return newUser;
-  };
+  }, []);
 
-  const logout = () => {
+  // ✅ Memoized logout function
+  const logout = useCallback(() => {
     localStorage.removeItem("token");
     setUser(null);
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
