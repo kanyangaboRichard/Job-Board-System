@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import ApplicationCard from "../components/ApplicationCard";
-import { getApplications,respondToApplication,} from "../api/applications";
+import { getApplications, respondToApplication } from "../api/applications";
 import type { Application } from "../api/applications";
 
 const ApplicationPage: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
+  const [search, setSearch] = useState("");
 
   // Fetch all applications on mount
   useEffect(() => {
@@ -32,28 +33,55 @@ const ApplicationPage: React.FC = () => {
       .catch((err) => console.error("Failed to update application:", err));
   };
 
+  // Filter applications by applicant name/email
+  const filteredApplications = applications.filter((app) =>
+    [app.applicantName, app.applicantEmail]
+      .join(" ")
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">All Applications</h1>
-      {applications.map((app) => (
-        <ApplicationCard
-          key={app.id}
-          jobTitle={app.jobTitle}
-          applicantName={app.applicantName}
-          applicantEmail={app.applicantEmail}
-          coverLetter={app.coverLetter}
-          cvUrl={app.cvUrl}
-          status={app.status}
-          responseNote={app.responseNote}
-          isAdmin
-          onAccept={() =>
-            handleRespond(app.id, "accepted", "Congratulations! You're shortlisted.")
-          }
-          onReject={() =>
-            handleRespond(app.id, "rejected", "Unfortunately, we won’t move forward.")
-          }
+    <div className="container py-4">
+      <h1 className="mb-4">All Applications</h1>
+
+      {/* Search bar */}
+      <div className="mb-4">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Search by applicant name or email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
-      ))}
+      </div>
+
+      {filteredApplications.length === 0 ? (
+        <p className="text-muted">No applications found.</p>
+      ) : (
+        <div className="row">
+          {filteredApplications.map((app) => (
+            <div key={app.id} className="col-md-6 col-lg-4 mb-4">
+              <ApplicationCard
+                jobTitle={app.jobTitle}
+                applicantName={app.applicantName}
+                applicantEmail={app.applicantEmail}
+                coverLetter={app.coverLetter}
+                cvUrl={app.cvUrl}
+                status={app.status}
+                responseNote={app.responseNote}
+                isAdmin
+                onAccept={() =>
+                  handleRespond(app.id, "accepted", "Congratulations! You're shortlisted.")
+                }
+                onReject={() =>
+                  handleRespond(app.id, "rejected", "Unfortunately, we won’t move forward.")
+                }
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

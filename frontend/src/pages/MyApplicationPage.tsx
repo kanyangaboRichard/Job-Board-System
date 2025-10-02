@@ -18,28 +18,31 @@ const MyApplicationPage: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <p className="p-6 text-gray-600">Loading your applications...</p>;
+    return <p className="p-4 text-muted">Loading your applications...</p>;
   }
 
   if (error) {
-    return <p className="p-6 text-red-600">{error}</p>;
+    return <p className="p-4 text-danger">{error}</p>;
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">My Applications</h1>
+    <div className="container py-4">
+      <h1 className="mb-4">My Applications</h1>
 
       {applications.length === 0 ? (
-        <p className="text-gray-600">You haven’t applied for any jobs yet.</p>
+        <p className="text-muted">You haven’t applied for any jobs yet.</p>
       ) : (
-        applications.map((app) => (
-          <ApplicationCard
-            key={app.id}
-            jobTitle={app.jobTitle}
-            status={app.status}
-            responseNote={app.responseNote}
-          />
-        ))
+        <div className="row">
+          {applications.map((app) => (
+            <div key={app.id} className="col-md-6 col-lg-4 mb-4">
+              <ApplicationCard
+                jobTitle={app.jobTitle}
+                status={app.status}
+                responseNote={app.responseNote}
+              />
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

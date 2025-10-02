@@ -12,7 +12,7 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav className="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
       <div className="container-fluid">
         {/* Brand / Logo */}
         <Link className="navbar-brand fw-bold" to="/">
@@ -38,7 +38,7 @@ const Navbar: React.FC = () => {
             {user ? (
               <>
                 {/* Common for all authenticated users */}
-                <li className="nav-item">
+                <li className="nav-item me-2">
                   <Link className="nav-link" to="/">
                     Home
                   </Link>

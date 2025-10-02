@@ -30,76 +30,73 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
   onReject,
 }) => {
   return (
-    <div className="border rounded-lg shadow-md p-4 mb-4 bg-white">
-      <h2 className="text-lg font-semibold text-gray-800">{jobTitle}</h2>
+    <div className="card shadow-sm h-100">
+      <div className="card-body d-flex flex-column">
+        {/* Job Title */}
+        <h5 className="card-title">{jobTitle}</h5>
 
-      {/* User Info (Admin only) */}
-      {isAdmin && (
-        <div className="mt-2">
-          <p>
-            <span className="font-medium">Applicant:</span> {applicantName}
-          </p>
-          <p>
-            <span className="font-medium">Email:</span> {applicantEmail}
-          </p>
-          {coverLetter && (
-            <p className="mt-2">
-              <span className="font-medium">Cover Letter:</span> {coverLetter}
+        {/* Applicant Info (Admin only) */}
+        {isAdmin && (
+          <div className="mb-2">
+            <p className="card-text mb-1">
+              <strong>Applicant:</strong> {applicantName}
             </p>
-          )}
-          {cvUrl && (
-            <p className="mt-2">
-              <a
-                href={cvUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 underline"
-              >
-                View CV
-              </a>
+            <p className="card-text mb-1">
+              <strong>Email:</strong> {applicantEmail}
             </p>
-          )}
+            {coverLetter && (
+              <p className="card-text mb-1">
+                <strong>Cover Letter:</strong> {coverLetter}
+              </p>
+            )}
+            {cvUrl && (
+              <p className="card-text">
+                <a
+                  href={cvUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary"
+                >
+                  View CV
+                </a>
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Status */}
+        <div className="mt-auto">
+          <span className="fw-bold">Status: </span>
+          <span
+            className={`badge ${
+              status === "pending"
+                ? "bg-warning text-dark"
+                : status === "accepted"
+                ? "bg-success"
+                : "bg-danger"
+            }`}
+          >
+            {status.toUpperCase()}
+          </span>
         </div>
-      )}
 
-      {/* Status */}
-      <div className="mt-3">
-        <span className="font-medium">Status:</span>{" "}
-        <span
-          className={`px-2 py-1 rounded text-sm ${
-            status === "pending"
-              ? "bg-yellow-200 text-yellow-800"
-              : status === "accepted"
-              ? "bg-green-200 text-green-800"
-              : "bg-red-200 text-red-800"
-          }`}
-        >
-          {status.toUpperCase()}
-        </span>
+        {/* Response Note */}
+        {responseNote && (
+          <p className="mt-2 text-muted fst-italic">Note: {responseNote}</p>
+        )}
+
+        {/* Admin Actions */}
+        {isAdmin && status === "pending" && (
+          <div className="mt-3 d-flex gap-2">
+            <button onClick={onAccept} className="btn btn-sm btn-success">
+              Accept
+            </button>
+            <button onClick={onReject} className="btn btn-sm btn-danger">
+              Reject
+            </button>
+          </div>
+        )}
       </div>
-
-      {/* Response Note */}
-      {responseNote && (
-        <p className="mt-2 text-gray-600 italic">Note: {responseNote}</p>
-      )}
-
-      {/* Admin Actions */}
-      {isAdmin && status === "pending" && (
-        <div className="mt-3 flex gap-2">
-          <button
-            onClick={onAccept}
-            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-          >
-            Accept
-          </button>
-          <button
-            onClick={onReject}
-            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-          >
-            Reject
-          </button>
-        </div>
-      )}
     </div>
   );
 };
