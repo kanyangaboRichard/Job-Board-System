@@ -8,6 +8,7 @@ import Register from "../pages/Register";
 import AdminDashboard from "../pages/AdminDashboard";
 import ApplicationPage from "../pages/ApplicationPage";   // admin view
 import MyApplicationPage from "../pages/MyApplicationPage"; // user view
+import UserManagement from "../pages/UserManagement"; // ✅ new page
 import { useAuth } from "../context/useAuth";
 import MainLayout from "../layouts/MainLayout";
 
@@ -79,6 +80,14 @@ const AppRouter: React.FC = () => {
           element={
             <AdminRoute>
               <ApplicationPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <UserManagement />
             </AdminRoute>
           }
         />
