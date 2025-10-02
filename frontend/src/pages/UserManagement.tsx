@@ -13,7 +13,7 @@ const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Helper: get token from localStorage
+  // Helper: get token from localStorage
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
     return {
@@ -22,7 +22,7 @@ const UserManagement: React.FC = () => {
     };
   };
 
-  // ✅ Fetch users (admin only)
+  // Fetch users (admin only)
   useEffect(() => {
     if (user?.role === "admin") {
       fetch("http://localhost:3005/api/users", {
@@ -38,7 +38,7 @@ const UserManagement: React.FC = () => {
     }
   }, [user]);
 
-  // ✅ Promote user to admin
+  // Promote user to admin
   const handleMakeAdmin = async (id: number | string) => {
     try {
       const res = await fetch(`http://localhost:3005/api/users/${id}/make-admin`, {
@@ -57,7 +57,7 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  // ✅ Revoke admin privileges
+  // Revoke admin privileges
   const handleRevokeAdmin = async (id: number | string) => {
     try {
       const res = await fetch(`http://localhost:3005/api/users/${id}/revoke-admin`, {
