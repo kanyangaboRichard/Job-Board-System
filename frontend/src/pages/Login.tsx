@@ -5,7 +5,6 @@ import { useAuth } from "../context/AuthContext";
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"user" | "admin">("user");
   const [error, setError] = useState<string | null>(null);
 
   const location = useLocation();
@@ -37,7 +36,7 @@ const Login: React.FC = () => {
       const res = await fetch("http://localhost:3005/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role }),
+        body: JSON.stringify({ email, password }), // role removed 🚀
       });
 
       const data = await res.json();
@@ -48,7 +47,7 @@ const Login: React.FC = () => {
       }
 
       // Save user + redirect by role
-      const decoded = login(data.token);
+      const decoded = login(data.token); // role decoded from JWT
       const params = new URLSearchParams(location.search);
       const redirect = params.get("redirect") || "/";
 
@@ -72,17 +71,17 @@ const Login: React.FC = () => {
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
-        <div className="col-md-6">
-          <div className="card shadow">
-            <div className="card-body">
-              <h3 className="card-title mb-4 text-center">Login</h3>
+        <div className="col-md-4 col-sm-8">
+          <div className="card shadow-sm border-0">
+            <div className="card-body p-4">
+              <h4 className="card-title mb-3 text-center">Login</h4>
 
               {error && <div className="alert alert-danger">{error}</div>}
 
               {/* Email login form */}
               <form onSubmit={handleLogin}>
                 <div className="mb-3">
-                  <label className="form-label">Email address</label>
+                  <label className="form-label">Email</label>
                   <input
                     type="email"
                     className="form-control"
@@ -103,21 +102,6 @@ const Login: React.FC = () => {
                   />
                 </div>
 
-                {/* Role selector */}
-                <div className="mb-3">
-                  <label className="form-label">Role</label>
-                  <select
-                    className="form-select"
-                    value={role}
-                    onChange={(e) =>
-                      setRole(e.target.value as "user" | "admin")
-                    }
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-
                 <button type="submit" className="btn btn-primary w-100">
                   Login with Email
                 </button>
@@ -127,8 +111,8 @@ const Login: React.FC = () => {
               <div className="text-center my-3">OR</div>
 
               {/* Register link */}
-              <div className="text-center my-3">
-                <Link to="/register" className="d-block">
+              <div className="text-center mb-3">
+                <Link to="/register" className="d-block small">
                   Don't have an account? Register
                 </Link>
               </div>
