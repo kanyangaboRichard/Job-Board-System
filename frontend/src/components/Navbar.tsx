@@ -59,6 +59,14 @@ const Navbar: React.FC = () => {
                     </li>
                   </>
                 )}
+                {/* Admin-only link */}
+                {user.role === "admin" && (
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/admin/users">
+                      Manage Users
+                    </Link>
+                  </li>
+                )}
 
                 {/* Normal user-only link */}
                 {user.role !== "admin" && (
