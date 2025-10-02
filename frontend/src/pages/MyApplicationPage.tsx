@@ -1,25 +1,29 @@
 import React, { useEffect, useState } from "react";
 import ApplicationCard from "../components/ApplicationCard";
-
-type Application = {
-  id: string | number;
-  jobTitle: string;
-  status: "pending" | "accepted" | "rejected";
-  responseNote?: string;
-};
+import { getUserApplications, type Application } from "../api/applications";
 
 const MyApplicationPage: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch only the current user's applications
-    fetch("/api/applications/user", { credentials: "include" })
-      .then((res) => res.json())
-      .then((data: Application[]) => setApplications(data))
-      .catch((err) =>
-        console.error("Failed to fetch user applications:", err)
-      );
+    getUserApplications()
+      .then(setApplications)
+      .catch((err) => {
+        console.error("Failed to fetch user applications:", err);
+        setError("Could not load your applications.");
+      })
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return <p className="p-6 text-gray-600">Loading your applications...</p>;
+  }
+
+  if (error) {
+    return <p className="p-6 text-red-600">{error}</p>;
+  }
 
   return (
     <div className="p-6">
