@@ -21,15 +21,13 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  token: localStorage.getItem("token"),
-  user: localStorage.getItem("user") 
-    ? JSON.parse(localStorage.getItem("user")!) 
-    : null,
+  token: null,
+  user: null,
   loading: false,
   error: null,
 };
 
-//  Login
+//Login thunk
 export const login = createAsyncThunk<
   AuthResponse,
   { email: string; password: string },
@@ -39,23 +37,31 @@ export const login = createAsyncThunk<
     const res = await api.post<AuthResponse>("/auth/login", { email, password });
     return res.data;
   } catch (err: unknown) {
-    const error = err as { response?: { data?: { message?: string } } };
-    return rejectWithValue(error.response?.data?.message || "Login failed");
+    if (err instanceof Error) {
+      return rejectWithValue(err.message);
+    }
+    return rejectWithValue("Login failed");
   }
 });
 
-//  Register
+// Register thunk
 export const register = createAsyncThunk<
   AuthResponse,
-  { email: string; password: string; name: string },
+  { name: string; email: string; password: string },
   { rejectValue: string }
->("auth/register", async ({ email, password, name }, { rejectWithValue }) => {
+>("auth/register", async ({ name, email, password }, { rejectWithValue }) => {
   try {
-    const res = await api.post<AuthResponse>("/auth/register", { email, password, name });
+    const res = await api.post<AuthResponse>("/auth/register", {
+      name,
+      email,
+      password,
+    });
     return res.data;
   } catch (err: unknown) {
-    const error = err as { response?: { data?: { message?: string } } };
-    return rejectWithValue(error.response?.data?.message || "Registration failed");
+    if (err instanceof Error) {
+      return rejectWithValue(err.message);
+    }
+    return rejectWithValue("Registration failed");
   }
 });
 
@@ -66,17 +72,12 @@ const authSlice = createSlice({
     logout: (state) => {
       state.token = null;
       state.user = null;
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-    },
-    setUser: (state, action: PayloadAction<User>) => {
-      state.user = action.payload;
-      localStorage.setItem("user", JSON.stringify(action.payload));
+      state.error = null;
+      state.loading = false;
     },
   },
   extraReducers: (builder) => {
     builder
-      // login
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -85,15 +86,11 @@ const authSlice = createSlice({
         state.loading = false;
         state.token = action.payload.token;
         state.user = action.payload.user;
-        state.error = null;
-        localStorage.setItem("token", action.payload.token);
-        localStorage.setItem("user", JSON.stringify(action.payload.user));
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Login failed";
       })
-      // register
       .addCase(register.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -102,9 +99,6 @@ const authSlice = createSlice({
         state.loading = false;
         state.token = action.payload.token;
         state.user = action.payload.user;
-        state.error = null;
-        localStorage.setItem("token", action.payload.token);
-        localStorage.setItem("user", JSON.stringify(action.payload.user));
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
@@ -113,5 +107,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, setUser } = authSlice.actions;
+export const { logout } = authSlice.actions;
 export default authSlice.reducer;

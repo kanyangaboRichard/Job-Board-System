@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  // ✅ Memoized login function
+  //  Memorized login function
   const login = useCallback((token: string) => {
     localStorage.setItem("token", token);
     const decoded = jwtDecode<TokenPayload>(token);
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return newUser;
   }, []);
 
-  // ✅ Memoized logout function
+  //  Memoized logout function
   const logout = useCallback(() => {
     localStorage.removeItem("token");
     setUser(null);
