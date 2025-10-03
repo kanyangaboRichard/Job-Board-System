@@ -5,12 +5,12 @@ import JobDetails from "../pages/JobDetails";
 import ApplyJob from "../pages/ApplyJob";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
-import AdminDashboard from "../pages/adminDashboard";
+import AdminDashboard from "../pages/AdminDashboard";
 import ApplicationPage from "../pages/ApplicationPage";   // admin view
 import MyApplicationPage from "../pages/MyApplicationPage"; // user view
 import UserManagement from "../pages/UserManagement"; //new page
 import { useAuth } from "../context/useAuth";
-import MainLayout from "../layouts/mainLayout";
+import MainLayout from "../layouts/MainLayout";
 
 /**
  * ProtectedRoute - checks if a user is logged in, otherwise redirects to login.
