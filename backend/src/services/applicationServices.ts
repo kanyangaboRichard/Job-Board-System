@@ -1,4 +1,3 @@
-// src/services/applicationServices.ts
 import pool from "../config/db";
 
 export type ApplicationStatus = "pending" | "accepted" | "rejected";
@@ -11,7 +10,7 @@ export interface ApplicationRow {
   applicant_name?: string;
   applicant_email?: string;
   cover_letter?: string;
-  cv_url?: string;
+  cv_url?: string; 
   status: ApplicationStatus;
   response_note?: string | null;
   applied_at: Date;
@@ -19,14 +18,15 @@ export interface ApplicationRow {
 }
 
 /**
- * Apply for a Job
+ * Apply for a Job (using CV link instead of file upload)
  */
 export const applyForJobService = async (
   jobId: string,
   userId: number,
   coverLetter: string,
-  cvUrl: string
+  cvLink: string
 ): Promise<ApplicationRow> => {
+  // Check if user already applied for this job
   const check = await pool.query<{ id: number }>(
     "SELECT id FROM applications WHERE job_id = $1 AND user_id = $2",
     [jobId, userId]
@@ -36,11 +36,12 @@ export const applyForJobService = async (
     throw new Error("Already applied to this job");
   }
 
+  // Insert new application
   const result = await pool.query<ApplicationRow>(
     `INSERT INTO applications (job_id, user_id, cover_letter, cv_url, status)
      VALUES ($1, $2, $3, $4, 'pending')
      RETURNING id, job_id, user_id, cover_letter, cv_url, status, response_note, applied_at`,
-    [jobId, userId, coverLetter, cvUrl]
+    [jobId, userId, coverLetter, cvLink]
   );
 
   if (result.rows.length === 0) {

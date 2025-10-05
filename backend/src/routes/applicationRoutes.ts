@@ -1,42 +1,30 @@
-// src/routes/applicationRoutes.ts
 import { Router } from "express";
-import multer, { StorageEngine } from "multer";
 import * as applicationController from "../controllers/applicationController";
 import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 
-// ========== MULTER CONFIG ==========
-const storage: StorageEngine = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
-  },
-});
-
-const upload = multer({ storage });
-
-// ========== ROUTES ==========
-
-// ✅ User applies for a job (CV upload)
+/**
+ * Apply for a job (using CV link instead of file upload)
+ */
 router.post(
   "/:jobId/apply",
   requireAuth,
-  upload.single("cv"), // must match "cv" key from FormData
   applicationController.applyForJob
 );
 
-// ✅ Get all applications — admin gets all, user gets their own
+/**
+ * Get all applications
+ * - Admin → all applications
+ * - User → only their applications
+ */
 router.get("/", requireAuth, async (req: any, res, next) => {
   try {
     if (req.user.role === "admin") {
-      // Admin → all applications
+      // Admin: get all
       return await applicationController.getAllApplications(req, res, next);
     } else {
-      // User → their own applications
+      // Normal user: get their own
       return await applicationController.getUserApplications(req, res, next);
     }
   } catch (error) {
@@ -45,10 +33,14 @@ router.get("/", requireAuth, async (req: any, res, next) => {
   }
 });
 
-// ✅ Explicit user route (still works, but optional)
+/**
+ * Get current user's applications (explicit route)
+ */
 router.get("/user", requireAuth, applicationController.getUserApplications);
 
-// ✅ Admin: get applications for a specific job
+/**
+ * Admin: Get applications for a specific job
+ */
 router.get("/:jobId", requireAuth, async (req: any, res, next) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Forbidden: Admins only" });
@@ -56,7 +48,9 @@ router.get("/:jobId", requireAuth, async (req: any, res, next) => {
   return applicationController.getApplicationsByJob(req, res, next);
 });
 
-// ✅ Admin: update application status
+/**
+ * Admin: Update application status (accept/reject/pending)
+ */
 router.patch("/:id", requireAuth, async (req: any, res, next) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Forbidden: Admins only" });

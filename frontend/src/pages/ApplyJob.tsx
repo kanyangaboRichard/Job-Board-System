@@ -35,7 +35,7 @@ const ApplyJob: React.FC = () => {
           },
           body: JSON.stringify({
             cover_letter: coverLetter,
-            cv_link: cvLink,
+            cv_url: cvLink,
           }),
         }
       );

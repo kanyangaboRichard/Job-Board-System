@@ -42,7 +42,7 @@ export const createJobService = async (
   createdBy: number
 ) => {
   const result = await pool.query(
-    "INSERT INTO jobs (title, company, location, description, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING *",
+    "INSERT INTO jobs (title, company, location, description, posted_by) VALUES ($1,$2,$3,$4,$5) RETURNING *",
     [title, company, location, description, createdBy]
   );
   return result.rows[0];

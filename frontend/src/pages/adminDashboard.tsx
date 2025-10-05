@@ -28,7 +28,7 @@ const AdminDashboard: React.FC = () => {
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  // ✅ Fetch jobs
+  // ✅ Fetch jobs from backend
   useEffect(() => {
     if (!token) return;
 
@@ -52,32 +52,74 @@ const AdminDashboard: React.FC = () => {
   }, [token]);
 
   // ✅ Save (Add or Edit)
-  const handleSave = () => {
+  const handleSave = async () => {
     const salaryNum = Number(salary) || 0;
 
-    if (editingJob) {
-      // Update job
-      setJobs((prev) =>
-        prev.map((job) =>
-          job.id === editingJob.id
-            ? { ...job, title, company, location, salary: salaryNum, description }
-            : job
-        )
-      );
-    } else {
-      // Add new job
-      const newJob: Job = {
-        id: Date.now(),
-        title,
-        company,
-        location,
-        salary: salaryNum,
-        description,
-      };
-      setJobs((prev) => [newJob, ...prev]);
+    if (!title || !company || !location || !description) {
+      setError("Please fill in all fields.");
+      return;
     }
 
-    resetForm();
+    try {
+      const method = editingJob ? "PUT" : "POST";
+      const url = editingJob
+        ? `http://localhost:3005/api/jobs/${editingJob.id}`
+        : "http://localhost:3005/api/jobs";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title,
+          company,
+          location,
+          description,
+          salary: salaryNum,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to save job");
+      }
+
+      const savedJob = await res.json();
+
+      if (editingJob) {
+        // ✅ Update existing job in UI
+        setJobs((prev) =>
+          prev.map((job) => (job.id === savedJob.id ? savedJob : job))
+        );
+      } else {
+        // ✅ Add new job from backend (with DB ID)
+        setJobs((prev) => [savedJob, ...prev]);
+      }
+
+      resetForm();
+    } catch (err) {
+      console.error("Error saving job:", err);
+      setError("Could not save job. Please try again.");
+    }
+  };
+
+  // ✅ Delete Job
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this job?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:3005/api/jobs/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to delete job");
+
+      setJobs((prev) => prev.filter((job) => job.id !== id));
+    } catch (err) {
+      console.error("Error deleting job:", err);
+      setError("Could not delete job. Please try again.");
+    }
   };
 
   const resetForm = () => {
@@ -88,6 +130,7 @@ const AdminDashboard: React.FC = () => {
     setDescription("");
     setEditingJob(null);
     setShowModal(false);
+    setError(null);
   };
 
   if (!token) return <p className="p-4 text-muted">Please log in as an admin.</p>;
@@ -140,6 +183,12 @@ const AdminDashboard: React.FC = () => {
                       }}
                     >
                       Edit
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => handleDelete(job.id)}
+                    >
+                      Delete
                     </button>
                   </div>
                 </div>
@@ -194,6 +243,7 @@ const AdminDashboard: React.FC = () => {
                   <input
                     className="form-control"
                     placeholder="Salary"
+                    type="number"
                     value={salary}
                     onChange={(e) => setSalary(e.target.value)}
                   />

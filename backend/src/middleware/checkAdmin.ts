@@ -14,14 +14,21 @@ declare global {
   }
 }
 
+//  Middleware for admin-only routes
 export function checkAdmin(req: Request, res: Response, next: NextFunction) {
-  console.log(" [checkAdmin] req.user received from Passport:", req.user);
+  // Only log in development for debugging
+  if (process.env.NODE_ENV === "development") {
+    console.log("[checkAdmin] User attempting access:", req.user);
+  }
 
   if (req.user && req.user.role === "admin") {
-    console.log(" [checkAdmin] Admin access granted");
     return next();
   }
 
-  console.log(" [checkAdmin] Access denied. User or role invalid:", req.user);
+  // Log denied access in development only
+  if (process.env.NODE_ENV === "development") {
+    console.warn("[checkAdmin] Access denied:", req.user);
+  }
+
   return res.status(403).json({ message: "Forbidden: Admins only" });
 }

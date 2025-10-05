@@ -1,33 +1,43 @@
-// src/controllers/applicationController.ts
 import { RequestHandler } from "express";
 import * as applicationService from "../services/applicationServices";
 
 /**
- * Apply for a job
+ * Apply for a job (using CV link instead of file upload)
  */
 export const applyForJob: RequestHandler = async (req, res) => {
   try {
     const { jobId } = req.params;
 
+    // Validate job ID
     if (!jobId || isNaN(parseInt(jobId, 10))) {
       return res.status(400).json({ error: "Valid Job ID is required" });
     }
 
+    // Ensure user is authenticated
     if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { cover_letter } = req.body as { cover_letter?: string };
-    const file = req.file as Express.Multer.File | undefined;
+    // Extract fields from body
+    const { cover_letter, cv_url } = req.body as {
+      cover_letter?: string;
+      cv_url?: string;
+    };
 
-    if (!cover_letter || !file) {
+    // Validate required fields
+    if (!cover_letter || !cv_url) {
       return res
         .status(400)
-        .json({ error: "Cover letter and CV file are required" });
+        .json({ error: "Cover letter and CV URL are required" });
     }
 
-    const cv_url = `/uploads/${file.filename}`;
+    // Optionally validate CV URL format
+    const allowedDomains = ["https://", "http://"];
+    if (!allowedDomains.some((prefix) => cv_url.startsWith(prefix))) {
+      return res.status(400).json({ error: "Invalid CV URL format" });
+    }
 
+    // Apply via service
     const application = await applicationService.applyForJobService(
       jobId,
       req.user.id,
@@ -51,6 +61,7 @@ export const applyForJob: RequestHandler = async (req, res) => {
 export const getApplicationsByJob: RequestHandler = async (req, res) => {
   try {
     const { jobId } = req.params;
+
     if (!jobId || isNaN(parseInt(jobId, 10))) {
       return res.status(400).json({ error: "Valid Job ID is required" });
     }
@@ -72,10 +83,7 @@ export const getUserApplications: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const applications = await applicationService.getUserApplicationsService(
-      req.user.id
-    );
-
+    const applications = await applicationService.getUserApplicationsService(req.user.id);
     return res.json(applications);
   } catch (err) {
     console.error("Get user applications error:", err);

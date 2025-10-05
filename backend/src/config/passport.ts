@@ -10,7 +10,7 @@ interface JwtPayload {
   role: string;
 }
 
-//  JWT Strategy (fully verified)
+// ✅ JWT Strategy
 passport.use(
   new JwtStrategy(
     {
@@ -28,10 +28,7 @@ passport.use(
         const user = result.rows[0];
         if (!user) return done(null, false);
 
-        //  Log to confirm role being attached (can remove after testing)
-        console.log(" [Passport] Verified JWT user:", user);
-
-        // Return full user object to middleware like checkAdmin
+        // ✅ Return full user object to Passport
         return done(null, {
           id: user.id,
           email: user.email,
@@ -39,14 +36,14 @@ passport.use(
           name: user.name,
         });
       } catch (err) {
-        console.error("JWT verification error:", err);
+        console.error("❌ JWT verification error:", err);
         return done(err, false);
       }
     }
   )
 );
 
-//  Google OAuth Strategy
+// ✅ Google OAuth Strategy
 passport.use(
   new GoogleStrategy(
     {
@@ -82,10 +79,14 @@ passport.use(
           user = insert.rows[0];
         }
 
-        console.log("[Google] Authenticated user:", user);
+        // Optional: only log Google auth once per login
+        if (process.env.NODE_ENV === "development") {
+          console.log(`[Google] Authenticated: ${user.email}`);
+        }
+
         return done(null, user);
       } catch (err) {
-        console.error("Google Strategy error:", err);
+        console.error(" Google Strategy error:", err);
         return done(err, false);
       }
     }
