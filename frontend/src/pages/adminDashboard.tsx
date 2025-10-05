@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/useAuth";
+import { useSelector } from "react-redux";
+import type { RootState } from "../store/store";
 
 interface Job {
   id: number;
@@ -11,396 +12,206 @@ interface Job {
 }
 
 const AdminDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const user = useSelector((state: RootState) => state.auth.user);
+  const token = useSelector((state: RootState) => state.auth.token);
+
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Add job state
+  // Form state
   const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
   const [company, setCompany] = useState("");
+  const [location, setLocation] = useState("");
   const [salary, setSalary] = useState("");
-
-  const [showAddModal, setShowAddModal] = useState(false);
-
-  // Edit & Delete state
+  const [description, setDescription] = useState("");
   const [editingJob, setEditingJob] = useState<Job | null>(null);
-  const [deletingJob, setDeletingJob] = useState<Job | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 6;
-
-  // Fetch jobs
+  // ✅ Fetch jobs
   useEffect(() => {
+    if (!token) return;
+
     const fetchJobs = async () => {
-      const res = await fetch("http://localhost:3005/api/jobs");
-      const data = await res.json();
-      setJobs(data);
-    };
-    fetchJobs();
-  }, []);
-
-  // Add job handler
-  const handleAddJob = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const token = localStorage.getItem("token");
-    if (!token) return alert("Not authenticated!");
-
-    const res = await fetch("http://localhost:3005/api/jobs", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        title,
-        location,
-        description,
-        company,
-        salary: Number(salary),
-      }),
-    });
-
-    if (res.ok) {
-      const newJob = await res.json();
-      setJobs((prev) => [...prev, newJob]);
-      setTitle("");
-      setLocation("");
-      setDescription("");
-      setCompany("");
-      setSalary("");
-      setShowAddModal(false); // close modal after adding
-    } else {
-      const error = await res.json();
-      alert(error.error || "Failed to add job");
-    }
-  };
-
-  // Update job handler
-  const handleUpdateJob = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingJob) return;
-
-    const token = localStorage.getItem("token");
-    if (!token) return alert("Not authenticated!");
-
-    const res = await fetch(`http://localhost:3005/api/jobs/${editingJob.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(editingJob),
-    });
-
-    if (res.ok) {
-      const updated = await res.json();
-      setJobs((prev) =>
-        prev.map((job) => (job.id === updated.id ? updated : job))
-      );
-      setEditingJob(null);
-    } else {
-      const error = await res.json();
-      alert(error.error || "Failed to update job");
-    }
-  };
-
-  // Delete job handler
-  const handleDeleteJob = async () => {
-    if (!deletingJob) return;
-
-    const token = localStorage.getItem("token");
-    if (!token) return alert("Not authenticated!");
-
-    const res = await fetch(
-      `http://localhost:3005/api/jobs/${deletingJob.id}`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+      try {
+        const res = await fetch("http://localhost:3005/api/jobs", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch jobs");
+        const data = await res.json();
+        setJobs(data);
+      } catch (err) {
+        console.error("Error fetching jobs:", err);
+        setError("Failed to load jobs.");
+      } finally {
+        setLoading(false);
       }
-    );
+    };
 
-    if (res.ok) {
-      setJobs((prev) => prev.filter((job) => job.id !== deletingJob.id));
-      setDeletingJob(null);
+    fetchJobs();
+  }, [token]);
+
+  // ✅ Save (Add or Edit)
+  const handleSave = () => {
+    const salaryNum = Number(salary) || 0;
+
+    if (editingJob) {
+      // Update job
+      setJobs((prev) =>
+        prev.map((job) =>
+          job.id === editingJob.id
+            ? { ...job, title, company, location, salary: salaryNum, description }
+            : job
+        )
+      );
     } else {
-      const error = await res.json();
-      alert(error.error || "Failed to delete job");
+      // Add new job
+      const newJob: Job = {
+        id: Date.now(),
+        title,
+        company,
+        location,
+        salary: salaryNum,
+        description,
+      };
+      setJobs((prev) => [newJob, ...prev]);
     }
+
+    resetForm();
   };
 
-  // Pagination logic
-  const indexOfLastJob = currentPage * jobsPerPage;
-  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
-  const currentJobs = jobs.slice(indexOfFirstJob, indexOfLastJob);
-  const totalPages = Math.ceil(jobs.length / jobsPerPage);
+  const resetForm = () => {
+    setTitle("");
+    setCompany("");
+    setLocation("");
+    setSalary("");
+    setDescription("");
+    setEditingJob(null);
+    setShowModal(false);
+  };
+
+  if (!token) return <p className="p-4 text-muted">Please log in as an admin.</p>;
+  if (user?.role !== "admin")
+    return <p className="p-4 text-danger">Access denied.</p>;
+  if (loading) return <p className="p-4 text-muted">Loading jobs...</p>;
+  if (error) return <p className="p-4 text-danger">{error}</p>;
 
   return (
-    <div className="container mt-4">
-      <h2>Admin Dashboard</h2>
-      <p>
-        Welcome, <strong>{user?.role}</strong>
-      </p>
+    <div className="container mt-5">
+      <div className="text-center mb-4">
+        <h2 className="fw-bold">Admin Dashboard</h2>
+        <p className="text-muted">
+          Welcome, {user?.name || "Admin"}! Manage all job postings below.
+        </p>
 
-      {/* Button to open Add Job Modal */}
-      <button
-        className="btn btn-primary mt-3"
-        onClick={() => setShowAddModal(true)}
-      >
-        Add New Job
-      </button>
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={() => setShowModal(true)}
+        >
+          + Add Job
+        </button>
+      </div>
 
-      {/* Job list in cards */}
-      <div className="row mt-4">
-        {currentJobs.map((job) => (
-          <div key={job.id} className="col-md-6 col-lg-4 mb-4">
-            <div className="card shadow-sm h-100">
-              <div className="card-body d-flex flex-column">
-                <h5 className="card-title">{job.title}</h5>
-                <h6 className="card-subtitle mb-2 text-muted">
-                  {job.company} - {job.location}
-                </h6>
-                <p className="card-text text-truncate">{job.description}</p>
-                <p className="fw-bold mt-auto"> {job.salary}Rwf</p>
+      {/* Job Cards */}
+      <div className="row">
+        {jobs.length > 0 ? (
+          jobs.map((job) => (
+            <div key={job.id} className="col-md-6 col-lg-4 mb-4">
+              <div className="card shadow-sm h-100">
+                <div className="card-body d-flex flex-column">
+                  <h5 className="card-title">{job.title}</h5>
+                  <h6 className="card-subtitle mb-2 text-muted">
+                    {job.company} — {job.location}
+                  </h6>
+                  <p className="card-text text-truncate">{job.description}</p>
+                  <p className="fw-semibold mt-2">Salary: {job.salary} RWF</p>
 
-                <div className="mt-2">
-                  <button
-                    className="btn btn-sm btn-warning me-2"
-                    onClick={() => setEditingJob(job)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => setDeletingJob(job)}
-                  >
-                    Delete
-                  </button>
+                  <div className="mt-auto d-flex justify-content-between">
+                    <button
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={() => {
+                        setEditingJob(job);
+                        setTitle(job.title);
+                        setCompany(job.company);
+                        setLocation(job.location);
+                        setSalary(String(job.salary));
+                        setDescription(job.description);
+                        setShowModal(true);
+                      }}
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="col-12 text-center">
+            <p className="text-muted">No job postings available.</p>
           </div>
-        ))}
+        )}
       </div>
 
-      {/* Pagination controls */}
-      {totalPages > 1 && (
-        <nav>
-          <ul className="pagination justify-content-center">
-            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-              <button
-                className="page-link"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              >
-                Previous
-              </button>
-            </li>
-            {Array.from({ length: totalPages }, (_, i) => (
-              <li
-                key={i}
-                className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
-              >
-                <button
-                  className="page-link"
-                  onClick={() => setCurrentPage(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              </li>
-            ))}
-            <li
-              className={`page-item ${
-                currentPage === totalPages ? "disabled" : ""
-              }`}
-            >
-              <button
-                className="page-link"
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-              >
-                Next
-              </button>
-            </li>
-          </ul>
-        </nav>
-      )}
-
-      {/* Add Job Modal */}
-      {showAddModal && (
-        <div className="modal show d-block" tabIndex={-1}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <form onSubmit={handleAddJob}>
-                <div className="modal-header">
-                  <h5 className="modal-title">Add New Job</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setShowAddModal(false)}
-                  ></button>
-                </div>
-                <div className="modal-body">
-                  <input
-                    className="form-control mb-2"
-                    placeholder="Job Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                  />
-                  <input
-                    className="form-control mb-2"
-                    placeholder="Location"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    required
-                  />
-                  <textarea
-                    className="form-control mb-2"
-                    placeholder="Description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required
-                  />
-                  <input
-                    className="form-control mb-2"
-                    placeholder="Company"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    required
-                  />
-                  <input
-                    className="form-control mb-2"
-                    type="number"
-                    placeholder="Salary"
-                    value={salary}
-                    onChange={(e) => setSalary(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowAddModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Add Job
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Modal */}
-      {editingJob && (
-        <div className="modal show d-block" tabIndex={-1}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <form onSubmit={handleUpdateJob}>
-                <div className="modal-header">
-                  <h5 className="modal-title">Edit Job</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setEditingJob(null)}
-                  ></button>
-                </div>
-                <div className="modal-body">
-                  <input
-                    className="form-control mb-2"
-                    value={editingJob.title}
-                    onChange={(e) =>
-                      setEditingJob({ ...editingJob, title: e.target.value })
-                    }
-                  />
-                  <input
-                    className="form-control mb-2"
-                    value={editingJob.location}
-                    onChange={(e) =>
-                      setEditingJob({ ...editingJob, location: e.target.value })
-                    }
-                  />
-                  <textarea
-                    className="form-control mb-2"
-                    value={editingJob.description}
-                    onChange={(e) =>
-                      setEditingJob({
-                        ...editingJob,
-                        description: e.target.value,
-                      })
-                    }
-                  />
-                  <input
-                    className="form-control mb-2"
-                    value={editingJob.company}
-                    onChange={(e) =>
-                      setEditingJob({ ...editingJob, company: e.target.value })
-                    }
-                  />
-                  <input
-                    className="form-control mb-2"
-                    type="number"
-                    value={editingJob.salary}
-                    onChange={(e) =>
-                      setEditingJob({
-                        ...editingJob,
-                        salary: Number(e.target.value),
-                      })
-                    }
-                  />
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setEditingJob(null)}
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deletingJob && (
-        <div className="modal show d-block" tabIndex={-1}>
-          <div className="modal-dialog">
+      {/* Modal */}
+      {showModal && (
+        <div
+          className="modal fade show d-block"
+          style={{ background: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Confirm Delete</h5>
+                <h5 className="modal-title">
+                  {editingJob ? "Edit Job" : "Add Job"}
+                </h5>
                 <button
                   type="button"
                   className="btn-close"
-                  onClick={() => setDeletingJob(null)}
+                  onClick={resetForm}
                 ></button>
               </div>
               <div className="modal-body">
-                <p>
-                  Are you sure you want to delete{" "}
-                  <strong>{deletingJob.title}</strong>?
-                </p>
+                <form className="vstack gap-3">
+                  <input
+                    className="form-control"
+                    placeholder="Job Title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                  <input
+                    className="form-control"
+                    placeholder="Company"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                  />
+                  <input
+                    className="form-control"
+                    placeholder="Location"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                  />
+                  <input
+                    className="form-control"
+                    placeholder="Salary"
+                    value={salary}
+                    onChange={(e) => setSalary(e.target.value)}
+                  />
+                  <textarea
+                    className="form-control"
+                    rows={3}
+                    placeholder="Job Description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </form>
               </div>
               <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setDeletingJob(null)}
-                >
+                <button className="btn btn-secondary" onClick={resetForm}>
                   Cancel
                 </button>
-                <button className="btn btn-danger" onClick={handleDeleteJob}>
-                  Delete
+                <button className="btn btn-primary" onClick={handleSave}>
+                  Save
                 </button>
               </div>
             </div>

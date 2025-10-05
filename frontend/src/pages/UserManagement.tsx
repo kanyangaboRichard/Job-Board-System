@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/useAuth";
+import { useSelector } from "react-redux";
+import type { RootState } from "../store/store";
 
 interface User {
   id: number | string;
@@ -9,36 +10,53 @@ interface User {
 }
 
 const UserManagement: React.FC = () => {
-  const { user } = useAuth();
+  const user = useSelector((state: RootState) => state.auth.user);
+  const token = useSelector((state: RootState) => state.auth.token);
+
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Helper: get token from localStorage
+  // ✅ Build headers safely
   const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
+    const savedToken = token || localStorage.getItem("token");
     return {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      Authorization: savedToken ? `Bearer ${savedToken}` : "",
     };
   };
 
-  // Fetch users (admin only)
+  // ✅ Fetch all users (Admin only)
   useEffect(() => {
-    if (user?.role === "admin") {
-      fetch("http://localhost:3005/api/users", {
-        method: "GET",
-        headers: getAuthHeaders(),
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error(`Failed to fetch users: ${res.status}`);
-          return res.json();
-        })
-        .then(setUsers)
-        .catch((err) => setError(err.message));
-    }
-  }, [user]);
+    if (!user || user.role !== "admin") return;
+    if (!token && !localStorage.getItem("token")) return;
 
-  // Promote user to admin
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("http://localhost:3005/api/users", {
+          method: "GET",
+          headers: getAuthHeaders(),
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch users: ${res.status}`);
+        }
+
+        const data = await res.json();
+        setUsers(data);
+      } catch (err) {
+        console.error("❌ Error fetching users:", err);
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [user, token]);
+
+  // ✅ Promote a user to admin
   const handleMakeAdmin = async (id: number | string) => {
     try {
       const res = await fetch(`http://localhost:3005/api/users/${id}/make-admin`, {
@@ -46,9 +64,11 @@ const UserManagement: React.FC = () => {
         headers: getAuthHeaders(),
       });
 
-      if (!res.ok) throw new Error(`Failed to promote user: ${res.status}`);
-      const updated = await res.json();
+      if (!res.ok) {
+        throw new Error(`Failed to promote user: ${res.status}`);
+      }
 
+      const updated = await res.json();
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, role: updated.role } : u))
       );
@@ -57,17 +77,24 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  // Revoke admin privileges
+  // ✅ Revoke admin rights (prevent self-revoke)
   const handleRevokeAdmin = async (id: number | string) => {
+    if (String(user?.id) === String(id)) {
+      alert("⚠️ You cannot revoke your own admin privileges.");
+      return;
+    }
+
     try {
       const res = await fetch(`http://localhost:3005/api/users/${id}/revoke-admin`, {
         method: "PATCH",
         headers: getAuthHeaders(),
       });
 
-      if (!res.ok) throw new Error(`Failed to revoke admin: ${res.status}`);
-      const updated = await res.json();
+      if (!res.ok) {
+        throw new Error(`Failed to revoke admin: ${res.status}`);
+      }
 
+      const updated = await res.json();
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, role: updated.role } : u))
       );
@@ -76,47 +103,66 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  // ✅ Access Control
   if (user?.role !== "admin") {
-    return <p className="p-6 text-red-600">Access denied</p>;
+    return <p className="p-6 text-danger">Access denied — Admins only</p>;
+  }
+
+  if (loading) {
+    return <p className="p-6 text-muted">Loading users...</p>;
   }
 
   if (error) {
-    return <p className="p-6 text-red-600">{error}</p>;
+    return <p className="p-6 text-danger">{error}</p>;
   }
 
   return (
     <div className="container mt-4">
       <h2>Manage Users</h2>
-      <ul className="list-group mt-3">
-        {users.map((u) => (
-          <li
-            key={u.id}
-            className="list-group-item d-flex justify-content-between align-items-center"
-          >
-            <span>
-              {u.email} ({u.role})
-            </span>
 
-            {/* Show buttons depending on role */}
-            {u.role === "user" ? (
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={() => handleMakeAdmin(u.id)}
+      {users.length === 0 ? (
+        <p className="mt-3 text-muted">No users found.</p>
+      ) : (
+        <ul className="list-group mt-3">
+          {users.map((u) => {
+            const isCurrentAdmin = String(u.id) === String(user?.id);
+            return (
+              <li
+                key={u.id}
+                className="list-group-item d-flex justify-content-between align-items-center"
               >
-                Make Admin
-              </button>
-            ) : (
-              <button
-                className="btn btn-sm btn-danger"
-                onClick={() => handleRevokeAdmin(u.id)}
-                disabled={u.id === user.id} // prevent self-revoke
-              >
-                Revoke Admin
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
+                <span>
+                  {u.email}{" "}
+                  <small className="text-muted">
+                    ({u.role}) {isCurrentAdmin && " — You"}
+                  </small>
+                </span>
+
+                <div>
+                  {u.role !== "admin" ? (
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={() => handleMakeAdmin(u.id)}
+                    >
+                      Make Admin
+                    </button>
+                  ) : (
+                    <button
+                      className={`btn btn-sm ${
+                        isCurrentAdmin ? "btn-secondary disabled" : "btn-outline-danger"
+                      }`}
+                      onClick={() => !isCurrentAdmin && handleRevokeAdmin(u.id)}
+                      disabled={isCurrentAdmin}
+                    >
+                      {isCurrentAdmin ? "You" : "Revoke Admin"}
+                    </button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 };

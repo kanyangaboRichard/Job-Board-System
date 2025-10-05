@@ -2,11 +2,11 @@
 import { Router } from "express";
 import multer, { StorageEngine } from "multer";
 import * as applicationController from "../controllers/applicationController";
-import { requireAuth, requireRole } from "../middleware/auth";
+import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 
-// Configure multer storage (typed)
+// ========== MULTER CONFIG ==========
 const storage: StorageEngine = multer.diskStorage({
   destination: (_req, _file, cb) => {
     cb(null, "uploads/");
@@ -19,45 +19,49 @@ const storage: StorageEngine = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ================= ROUTES =================
+// ========== ROUTES ==========
 
-// User applies for a job (with CV upload)
+// ✅ User applies for a job (CV upload)
 router.post(
   "/:jobId/apply",
   requireAuth,
-  upload.single("cv"), // must match FormData key in frontend
+  upload.single("cv"), // must match "cv" key from FormData
   applicationController.applyForJob
 );
 
-// Admin: get ALL applications
-router.get(
-  "/",
-  requireAuth,
-  requireRole("admin"),
-  applicationController.getAllApplications
-);
+// ✅ Get all applications — admin gets all, user gets their own
+router.get("/", requireAuth, async (req: any, res, next) => {
+  try {
+    if (req.user.role === "admin") {
+      // Admin → all applications
+      return await applicationController.getAllApplications(req, res, next);
+    } else {
+      // User → their own applications
+      return await applicationController.getUserApplications(req, res, next);
+    }
+  } catch (error) {
+    console.error("Error fetching applications:", error);
+    res.status(500).json({ error: "Failed to fetch applications" });
+  }
+});
 
-// User: get their own applications
-router.get(
-  "/user",
-  requireAuth,
-  applicationController.getUserApplications
-);
+// ✅ Explicit user route (still works, but optional)
+router.get("/user", requireAuth, applicationController.getUserApplications);
 
-// Admin: get applications for a specific job
-router.get(
-  "/:jobId",
-  requireAuth,
-  requireRole("admin"),
-  applicationController.getApplicationsByJob
-);
+// ✅ Admin: get applications for a specific job
+router.get("/:jobId", requireAuth, async (req: any, res, next) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Forbidden: Admins only" });
+  }
+  return applicationController.getApplicationsByJob(req, res, next);
+});
 
-// Admin: update application status
-router.patch(
-  "/:id",
-  requireAuth,
-  requireRole("admin"),
-  applicationController.updateApplicationStatus
-);
+// ✅ Admin: update application status
+router.patch("/:id", requireAuth, async (req: any, res, next) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Forbidden: Admins only" });
+  }
+  return applicationController.updateApplicationStatus(req, res, next);
+});
 
 export default router;

@@ -5,14 +5,12 @@ import pool from "./db";
 
 const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
-
-// JWT Strategy
-
 interface JwtPayload {
   id: number;
   role: string;
 }
 
+//  JWT Strategy (fully verified)
 passport.use(
   new JwtStrategy(
     {
@@ -21,24 +19,34 @@ passport.use(
     },
     async (payload: JwtPayload, done) => {
       try {
+        // Re-fetch user to ensure we have up-to-date role and info
         const result = await pool.query(
-          "SELECT id, email, role FROM users WHERE id=$1",
+          "SELECT id, email, role, name FROM users WHERE id = $1",
           [payload.id]
         );
+
         const user = result.rows[0];
         if (!user) return done(null, false);
 
-        return done(null, { id: user.id, role: user.role });
+        //  Log to confirm role being attached (can remove after testing)
+        console.log(" [Passport] Verified JWT user:", user);
+
+        // Return full user object to middleware like checkAdmin
+        return done(null, {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          name: user.name,
+        });
       } catch (err) {
+        console.error("JWT verification error:", err);
         return done(err, false);
       }
     }
   )
 );
 
-
-// Google Strategy
-
+//  Google OAuth Strategy
 passport.use(
   new GoogleStrategy(
     {
@@ -46,11 +54,10 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL:
         process.env.GOOGLE_CALLBACK_URL ||
-        "http://localhost:3005/api/auth/google/callback", // matches backend
+        "http://localhost:3005/api/auth/google/callback",
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (_accessToken, _refreshToken, profile, done) => {
       try {
-        // Extract email from Google profile
         const email =
           profile.emails && profile.emails[0]
             ? profile.emails[0].value
@@ -61,22 +68,24 @@ passport.use(
         }
 
         // Check if user already exists
-        const result = await pool.query("SELECT * FROM users WHERE email=$1", [
+        const result = await pool.query("SELECT * FROM users WHERE email = $1", [
           email,
         ]);
         let user = result.rows[0];
 
+        // If user doesn't exist, create new one
         if (!user) {
-          // Create new user if not found
           const insert = await pool.query(
-            "INSERT INTO users (email, password_hash, role, name) VALUES ($1,$2,$3,$4) RETURNING id, email, role, name",
+            "INSERT INTO users (email, password_hash, role, name) VALUES ($1, $2, $3, $4) RETURNING id, email, role, name",
             [email, "", "user", profile.displayName || "Google User"]
           );
           user = insert.rows[0];
         }
 
+        console.log("[Google] Authenticated user:", user);
         return done(null, user);
       } catch (err) {
+        console.error("Google Strategy error:", err);
         return done(err, false);
       }
     }

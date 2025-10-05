@@ -4,10 +4,15 @@ import pool from "../config/db";
 
 const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
-
+// ----------------------
 // Service: Register User
-
-export const registerUser = async (email: string, password: string, role: string = "user") => {
+// ----------------------
+export const registerUser = async (
+  email: string,
+  password: string,
+  name: string = "User",
+  role: string = "user"
+) => {
   // Check if user exists
   const existing = await pool.query("SELECT id FROM users WHERE email=$1", [email]);
   if (existing.rows.length > 0) {
@@ -17,41 +22,62 @@ export const registerUser = async (email: string, password: string, role: string
   // Hash password
   const hash = await bcrypt.hash(password, 10);
 
-  // Insert into DB
+  // Insert new user
   const result = await pool.query(
-    "INSERT INTO users (email, password_hash, role) VALUES ($1,$2,$3) RETURNING id, email, role",
-    [email, hash, role]
+    "INSERT INTO users (email, password_hash, name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, name, role",
+    [email, hash, name, role]
   );
 
   const user = result.rows[0];
 
-  // Generate JWT
-  const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
+  //  Include full details in the token
+  const token = jwt.sign(
+    { id: user.id, role: user.role, email: user.email, name: user.name },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 
   return { token, user };
 };
 
+// -------------------
 // Service: Login User
-
+// -------------------
 export const loginUser = async (email: string, password: string) => {
   // Find user
   const result = await pool.query("SELECT * FROM users WHERE email=$1", [email]);
   const user = result.rows[0];
   if (!user) throw new Error("Invalid credentials");
 
-  // Verify password
+  // Check password
   const match = await bcrypt.compare(password, user.password_hash);
   if (!match) throw new Error("Invalid credentials");
 
-  // Generate JWT
-  const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
+  //  Include everything needed for frontend role detection
+  const token = jwt.sign(
+    { id: user.id, role: user.role, email: user.email, name: user.name },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 
-  return { token, user: { id: user.id, email: user.email, role: user.role } };
+  return {
+    token,
+    user: { id: user.id, email: user.email, name: user.name, role: user.role },
+  };
 };
 
-
+// ----------------------
 // Service: Google Auth
-
-export const generateGoogleToken = (user: { id: number; role: string }) => {
-  return jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
+// ----------------------
+export const generateGoogleToken = (user: {
+  id: number;
+  email: string;
+  role: string;
+  name?: string;
+}) => {
+  return jwt.sign(
+    { id: user.id, role: user.role, email: user.email, name: user.name },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 };

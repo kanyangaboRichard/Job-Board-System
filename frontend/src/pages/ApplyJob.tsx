@@ -1,12 +1,12 @@
 // src/pages/ApplyJob.tsx
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
+
 
 const ApplyJob: React.FC = () => {
   const { id } = useParams(); // jobId
   const navigate = useNavigate();
-  useAuth();
+  
 
   const [coverLetter, setCoverLetter] = useState("");
   const [cvLink, setCvLink] = useState("");

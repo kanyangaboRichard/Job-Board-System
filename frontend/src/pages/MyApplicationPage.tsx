@@ -1,21 +1,33 @@
 import React, { useEffect, useState } from "react";
 import ApplicationCard from "../components/ApplicationCard";
 import { getUserApplications, type Application } from "../api/applications";
+import { useSelector } from "react-redux";
+import type { RootState } from "../store/store";
 
 const MyApplicationPage: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const token = useSelector((state: RootState) => state.auth.token);
 
   useEffect(() => {
-    getUserApplications()
-      .then(setApplications)
-      .catch((err) => {
+    // Only fetch when token exists
+    if (!token) return;
+
+    const fetchApps = async () => {
+      try {
+        const data = await getUserApplications();
+        setApplications(data);
+      } catch (err) {
         console.error("Failed to fetch user applications:", err);
         setError("Could not load your applications.");
-      })
-      .finally(() => setLoading(false));
-  }, []);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApps();
+  }, [token]); // ✅ depend on token
 
   if (loading) {
     return <p className="p-4 text-muted">Loading your applications...</p>;
