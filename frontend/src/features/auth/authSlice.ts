@@ -27,7 +27,21 @@ const initialState: AuthState = {
   error: null,
 };
 
-//Login thunk
+// ✅ Helper to extract error messages from API responses
+const extractErrorMessage = (error: unknown, fallback: string): string => {
+  const axiosError = error as {
+    response?: { data?: { error?: string; message?: string } };
+    message?: string;
+  };
+  return (
+    axiosError?.response?.data?.error ||
+    axiosError?.response?.data?.message ||
+    axiosError?.message ||
+    fallback
+  );
+};
+
+// ✅ LOGIN thunk
 export const login = createAsyncThunk<
   AuthResponse,
   { email: string; password: string },
@@ -36,35 +50,26 @@ export const login = createAsyncThunk<
   try {
     const res = await api.post<AuthResponse>("/auth/login", { email, password });
     return res.data;
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      return rejectWithValue(err.message);
-    }
-    return rejectWithValue("Login failed");
+  } catch (err) {
+    return rejectWithValue(extractErrorMessage(err, "Login failed"));
   }
 });
 
-// Register thunk
+// ✅ REGISTER thunk
 export const register = createAsyncThunk<
   AuthResponse,
   { name: string; email: string; password: string },
   { rejectValue: string }
 >("auth/register", async ({ name, email, password }, { rejectWithValue }) => {
   try {
-    const res = await api.post<AuthResponse>("/auth/register", {
-      name,
-      email,
-      password,
-    });
+    const res = await api.post<AuthResponse>("/auth/register", { name, email, password });
     return res.data;
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      return rejectWithValue(err.message);
-    }
-    return rejectWithValue("Registration failed");
+  } catch (err) {
+    return rejectWithValue(extractErrorMessage(err, "Registration failed"));
   }
 });
 
+// ✅ Slice
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -74,16 +79,22 @@ const authSlice = createSlice({
       state.user = null;
       state.error = null;
       state.loading = false;
+      localStorage.removeItem("persist:root"); // clear persisted state
     },
   },
   extraReducers: (builder) => {
     builder
+      // login cases
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
+        // ✅ Clear old persisted data first
+        localStorage.removeItem("persist:root");
+
         state.loading = false;
+        state.error = null;
         state.token = action.payload.token;
         state.user = action.payload.user;
       })
@@ -91,6 +102,8 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload || "Login failed";
       })
+
+      // register cases
       .addCase(register.pending, (state) => {
         state.loading = true;
         state.error = null;

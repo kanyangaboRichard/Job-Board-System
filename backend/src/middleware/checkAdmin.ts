@@ -15,8 +15,13 @@ declare global {
 }
 
 export function checkAdmin(req: Request, res: Response, next: NextFunction) {
+  console.log(" [checkAdmin] req.user received from Passport:", req.user);
+
   if (req.user && req.user.role === "admin") {
-    return next(); // ✅ allow
+    console.log(" [checkAdmin] Admin access granted");
+    return next();
   }
+
+  console.log(" [checkAdmin] Access denied. User or role invalid:", req.user);
   return res.status(403).json({ message: "Forbidden: Admins only" });
 }

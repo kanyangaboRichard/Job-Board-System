@@ -29,9 +29,11 @@ router.post("/register", async (req, res) => {
     );
 
     const user = result.rows[0];
-    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
     res.status(201).json({ token, user });
   } catch (err: any) {
@@ -41,15 +43,13 @@ router.post("/register", async (req, res) => {
 });
 
 // -------------------
-// Local Login
+// Local Login (Fixed)
 // -------------------
 router.post("/login", async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
 
-    const result = await pool.query("SELECT * FROM users WHERE email=$1", [
-      email,
-    ]);
+    const result = await pool.query("SELECT * FROM users WHERE email=$1", [email]);
     const user = result.rows[0];
 
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
@@ -57,13 +57,11 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
 
-    if (role && role !== user.role) {
-      return res.status(403).json({ error: "Role mismatch" });
-    }
-
-    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { id: user.id, role: user.role, email: user.email, name: user.name },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
     res.json({
       token,
@@ -83,10 +81,7 @@ router.post("/login", async (req, res) => {
 // -------------------
 // Google OAuth start
 // -------------------
-router.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
+router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 // -------------------
 // Google OAuth callback
@@ -99,11 +94,12 @@ router.get(
   }),
   (req, res) => {
     const user = req.user as { id: number; email: string; role: string };
-    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: user.id, role: user.role, email: user.email },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-    // Redirect back to frontend with token
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3001";
     res.redirect(`${frontendUrl}/?token=${token}`);
   }

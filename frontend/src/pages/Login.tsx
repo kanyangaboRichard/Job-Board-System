@@ -1,71 +1,69 @@
-import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import React, { useState, useEffect, useMemo } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { login } from "../features/auth/authSlice";
+import type { RootState, AppDispatch } from "../store/store";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { loading, user } = useSelector((state: RootState) => state.auth);
 
-  // Capture token from Google callback
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const googleToken = params.get("token");
-    const redirect = params.get("redirect") || "/";
+  //  Memoized redirect path — never changes shape
+  const redirect = useMemo(() => {
+    const param = new URLSearchParams(location.search).get("redirect");
+    return param && param !== "/login" ? param : "/";
+  }, [location.search]);
 
-    if (googleToken) {
-      const decoded = login(googleToken);
-      if (decoded?.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate(redirect);
-      }
-    }
-  }, [location.search, navigate, login]);
-
-  // Email/Password login
+  // Handle regular login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    try {
-      const res = await fetch("http://localhost:3005/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }), // role removed 🚀
-      });
+    const resultAction = await dispatch(login({ email, password }));
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Login failed");
-        return;
-      }
-
-      // Save user + redirect by role
-      const decoded = login(data.token); // role decoded from JWT
-      const params = new URLSearchParams(location.search);
-      const redirect = params.get("redirect") || "/";
-
-      if (decoded?.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate(redirect);
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Network error, could not connect to server!");
+    if (login.fulfilled.match(resultAction)) {
+      const role = resultAction.payload.user.role;
+      setTimeout(() => {
+        navigate(role === "admin" ? "/admin" : redirect, { replace: true });
+      }, 50);
+    } else {
+      const errMsg = resultAction.payload || "Login failed. Please try again.";
+      setError(typeof errMsg === "string" ? errMsg : "Login failed.");
     }
   };
 
-  // Google login
+  // Handle Google OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const googleToken = params.get("token");
+
+    if (googleToken) {
+      localStorage.setItem("googleToken", googleToken);
+      if (location.pathname === "/login") {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [location.pathname, location.search, navigate]);
+
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    if (user && location.pathname === "/login") {
+      const target = user.role === "admin" ? "/admin" : redirect;
+      setTimeout(() => navigate(target, { replace: true }), 50);
+    }
+  }, [user, redirect, navigate, location.pathname]);
+
+  // Google login trigger
   const handleGoogleLogin = () => {
-    const redirect = new URLSearchParams(location.search).get("redirect") || "/";
-    window.location.href = `http://localhost:3005/api/auth/google?redirect=${redirect}`;
+    window.location.href = `http://localhost:3005/api/auth/google?redirect=${encodeURIComponent(
+      redirect
+    )}`;
   };
 
   return (
@@ -78,7 +76,6 @@ const Login: React.FC = () => {
 
               {error && <div className="alert alert-danger">{error}</div>}
 
-              {/* Email login form */}
               <form onSubmit={handleLogin}>
                 <div className="mb-3">
                   <label className="form-label">Email</label>
@@ -88,6 +85,7 @@ const Login: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoFocus
                   />
                 </div>
 
@@ -102,22 +100,23 @@ const Login: React.FC = () => {
                   />
                 </div>
 
-                <button type="submit" className="btn btn-primary w-100">
-                  Login with Email
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100"
+                  disabled={loading}
+                >
+                  {loading ? "Logging in..." : "Login"}
                 </button>
               </form>
 
-              {/* Divider */}
               <div className="text-center my-3">OR</div>
 
-              {/* Register link */}
               <div className="text-center mb-3">
                 <Link to="/register" className="d-block small">
-                  Don't have an account? Register
+                  Don’t have an account? Register
                 </Link>
               </div>
 
-              {/* Google Sign-In */}
               <button
                 onClick={handleGoogleLogin}
                 className="btn btn-danger w-100"

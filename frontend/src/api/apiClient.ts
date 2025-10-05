@@ -9,41 +9,56 @@ const api = axios.create({
   withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
+// ✅ Utility function to safely extract token from persisted Redux
+function getStoredToken(): string | null {
+  // Try plain token (set manually in MainLayout or login)
+  const directToken = localStorage.getItem("token");
+  if (directToken) return directToken;
+
+  // Fallback: try Redux-persisted state
+  const persistedRoot = localStorage.getItem("persist:root");
+  if (!persistedRoot) return null;
+
   try {
-    const persistedRoot = localStorage.getItem("persist:root");
-    if (persistedRoot) {
-      const parsedRoot = JSON.parse(persistedRoot);
-
-      if (parsedRoot.auth) {
-        const auth = JSON.parse(parsedRoot.auth);
-
-        if (auth?.token) {
-          if (import.meta.env.DEV) {
-            console.log("Attaching token:", auth.token);
-          }
-          config.headers = {
-            ...config.headers,
-            Authorization: `Bearer ${auth.token}`,
-          };
-        } else {
-          if (import.meta.env.DEV) {
-            console.warn("No token found in persisted auth slice");
-          }
-        }
-      }
-    }
+    const parsedRoot = JSON.parse(persistedRoot);
+    const authData = parsedRoot.auth ? JSON.parse(parsedRoot.auth) : null;
+    return authData?.token || null;
   } catch (err) {
-    console.error("Error reading persisted token:", err);
+    console.error("Error parsing persisted token:", err);
+    return null;
   }
-  return config;
-});
+}
 
+// ✅ Intercept requests and attach token dynamically
+api.interceptors.request.use(
+  (config) => {
+    const token = getStoredToken();
+
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${token}`,
+      };
+      if (import.meta.env.DEV) {
+        console.log("✅ Attaching token:", token);
+      }
+    } else if (import.meta.env.DEV) {
+      console.warn("🚫 No token found (yet) in persisted auth slice");
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+//  Handle unauthorized responses gracefully
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      console.warn("Unauthorized – token missing, expired, or invalid");
+      console.warn(" Unauthorized – token expired, invalid, or missing");
+      // optional: redirect or clear persisted state here
+      // localStorage.removeItem("token");
     }
     return Promise.reject(err);
   }

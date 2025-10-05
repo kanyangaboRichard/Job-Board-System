@@ -1,106 +1,121 @@
 import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "../store/store";
+
 import Dashboard from "../pages/Dashboard";
 import JobDetails from "../pages/JobDetails";
 import ApplyJob from "../pages/ApplyJob";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import AdminDashboard from "../pages/AdminDashboard";
-import ApplicationPage from "../pages/ApplicationPage";   // admin view
-import MyApplicationPage from "../pages/MyApplicationPage"; // user view
-import UserManagement from "../pages/UserManagement"; //new page
-import { useAuth } from "../context/useAuth";
+import ApplicationPage from "../pages/ApplicationPage";
+import MyApplicationPage from "../pages/MyApplicationPage";
+import UserManagement from "../pages/UserManagement";
 import MainLayout from "../layouts/MainLayout";
 
-/**
- * ProtectedRoute - checks if a user is logged in, otherwise redirects to login.
- */
+/* --------------------------
+ ✅ Protected Route (for users)
+---------------------------*/
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { token } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
 
-  if (!user) {
+  if (!token) {
+    // Not logged in → redirect to login page
     return <Navigate to={`/login?redirect=${location.pathname}`} replace />;
   }
 
   return <>{children}</>;
 };
 
-/**
- * AdminRoute - checks if a user is admin, otherwise redirects.
- */
+/* --------------------------
+ ✅ Admin-only Route
+---------------------------*/
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { token, user } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
 
-  if (!user || user.role !== "admin") {
+  if (!token) {
     return <Navigate to={`/login?redirect=${location.pathname}`} replace />;
+  }
+
+  // Wait for Redux user to load
+  if (!user) {
+    return <p className="text-center mt-4 text-muted">Checking admin access...</p>;
+  }
+
+  // Deny non-admin users
+  if (user.role !== "admin") {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
 };
 
-const AppRouter: React.FC = () => {
-  return (
-    <Routes>
-      {/* Routes with Navbar */}
-      <Route element={<MainLayout />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/jobs/:id" element={<JobDetails />} />
+/* --------------------------
+ ✅ Main Router
+---------------------------*/
+const AppRouter: React.FC = () => (
+  <Routes>
+    {/* Shared layout (includes Navbar) */}
+    <Route element={<MainLayout />}>
+      {/* Public routes */}
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/jobs/:id" element={<JobDetails />} />
 
-        {/* User-only routes */}
-        <Route
-          path="/apply/:id"
-          element={
-            <ProtectedRoute>
-              <ApplyJob />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/applications"
-          element={
-            <ProtectedRoute>
-              <MyApplicationPage />
-            </ProtectedRoute>
-          }
-        />
+      {/* Protected routes (user must be logged in) */}
+      <Route
+        path="/apply/:id"
+        element={
+          <ProtectedRoute>
+            <ApplyJob />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/applications"
+        element={
+          <ProtectedRoute>
+            <MyApplicationPage />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* Admin-only routes */}
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/adminapplications"
-          element={
-            <AdminRoute>
-              <ApplicationPage />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <AdminRoute>
-              <UserManagement />
-            </AdminRoute>
-          }
-        />
-      </Route>
+      {/* ✅ Admin routes (secure and stable) */}
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/applications"
+        element={
+          <AdminRoute>
+            <ApplicationPage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <AdminRoute>
+            <UserManagement />
+          </AdminRoute>
+        }
+      />
+    </Route>
 
-      {/* Routes WITHOUT Navbar */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+    {/* Auth routes (no Navbar) */}
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
-  );
-};
+    {/* Fallback (invalid URLs) */}
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes>
+);
 
 export default AppRouter;

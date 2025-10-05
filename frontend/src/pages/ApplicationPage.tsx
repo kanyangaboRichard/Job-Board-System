@@ -1,45 +1,73 @@
 import React, { useEffect, useState } from "react";
 import ApplicationCard from "../components/ApplicationCard";
-import { getApplications, respondToApplication } from "../api/applications";
-import type { Application } from "../api/applications";
+import { getApplications, respondToApplication, type Application } from "../api/applications";
+import { useSelector } from "react-redux";
+import type { RootState } from "../store/store";
 
 const ApplicationPage: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch all applications on mount
+  // ✅ Get token from Redux (same as MyApplicationPage)
+  const token = useSelector((state: RootState) => state.auth.token);
+
   useEffect(() => {
-    getApplications()
-      .then((data) => setApplications(data))
-      .catch((err) => console.error("Failed to fetch applications:", err));
-  }, []);
+    // ✅ Only fetch applications when token exists
+    if (!token) return;
 
-  // Handle Accept/Reject + optional note
-  const handleRespond = (
+    const fetchApplications = async () => {
+      try {
+        const data = await getApplications();
+        setApplications(data);
+      } catch (err) {
+        console.error("Failed to fetch applications:", err);
+        setError("Could not load applications.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApplications();
+  }, [token]); // depend on token like MyApplicationPage
+
+  // ✅ Handle Accept/Reject actions
+  const handleRespond = async (
     id: number | string,
     status: "accepted" | "rejected",
     responseNote?: string
   ) => {
-    respondToApplication(id, status, responseNote)
-      .then((updated) => {
-        setApplications((prev) =>
-          prev.map((app) =>
-            app.id === id
-              ? { ...app, status: updated.status, responseNote: updated.responseNote }
-              : app
-          )
-        );
-      })
-      .catch((err) => console.error("Failed to update application:", err));
+    try {
+      const updated = await respondToApplication(id, status, responseNote);
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === id
+            ? { ...app, status: updated.status, responseNote: updated.responseNote }
+            : app
+        )
+      );
+    } catch (err) {
+      console.error("Failed to update application:", err);
+    }
   };
 
-  // Filter applications by applicant name/email
+  // ✅ Filter applications by applicant name/email
   const filteredApplications = applications.filter((app) =>
     [app.applicantName, app.applicantEmail]
       .join(" ")
       .toLowerCase()
       .includes(search.toLowerCase())
   );
+
+  // ✅ Consistent loading & error handling
+  if (loading) {
+    return <p className="p-4 text-muted">Loading applications...</p>;
+  }
+
+  if (error) {
+    return <p className="p-4 text-danger">{error}</p>;
+  }
 
   return (
     <div className="container py-4">

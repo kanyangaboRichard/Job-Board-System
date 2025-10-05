@@ -68,7 +68,7 @@ export const respondToApplication = async (
   return normalizeApplication(res.data);
 };
 
-// 🔄 helper to map snake_case → camelCase
+// helper to map snake_case → camelCase
 function normalizeApplication(app: ApplicationResponse): Application {
   return {
     id: app.id,

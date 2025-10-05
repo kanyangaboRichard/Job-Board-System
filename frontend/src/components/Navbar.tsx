@@ -1,25 +1,26 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../features/auth/authSlice";
+import type { RootState } from "../store/store";
 
 const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const user = useSelector((state: RootState) => state.auth.user);
 
   const handleLogout = () => {
-    logout(); // clears token + user
-    navigate("/"); // redirect to homepage
+    dispatch(logout());
+    navigate("/");
   };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
       <div className="container-fluid">
-        {/* Brand / Logo */}
         <Link className="navbar-brand fw-bold" to="/">
           Job Board
         </Link>
 
-        {/* Mobile menu toggle */}
         <button
           className="navbar-toggler"
           type="button"
@@ -32,44 +33,39 @@ const Navbar: React.FC = () => {
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        {/* Menu links */}
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
             {user ? (
               <>
-                {/* Common for all authenticated users */}
                 <li className="nav-item me-2">
                   <Link className="nav-link" to="/">
                     Home
                   </Link>
                 </li>
 
-                {/* Admin-only links */}
+                {/* ✅ Admin links */}
                 {user.role === "admin" && (
                   <>
                     <li className="nav-item">
                       <Link className="nav-link" to="/admin">
-                        Admin Dashboard
+                        Dashboard
                       </Link>
                     </li>
                     <li className="nav-item">
-                      <Link className="nav-link" to="/admin/adminapplications">
+                      <Link className="nav-link" to="/admin/applications">
                         Applications
+                      </Link>
+                    </li>
+                    <li className="nav-item">
+                      <Link className="nav-link" to="/admin/users">
+                        Manage Users
                       </Link>
                     </li>
                   </>
                 )}
-                {/* Admin-only link */}
-                {user.role === "admin" && (
-                  <li className="nav-item">
-                    <Link className="nav-link" to="/admin/users">
-                      Manage Users
-                    </Link>
-                  </li>
-                )}
 
-                {/* Normal user-only link */}
-                {user.role !== "admin" && (
+                {/* ✅ Regular user links */}
+                {user.role === "user" && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/applications">
                       My Applications
@@ -77,7 +73,6 @@ const Navbar: React.FC = () => {
                   </li>
                 )}
 
-                {/* Logout */}
                 <li className="nav-item">
                   <button
                     onClick={handleLogout}
@@ -89,7 +84,6 @@ const Navbar: React.FC = () => {
               </>
             ) : (
               <>
-                {/* Public routes */}
                 <li className="nav-item">
                   <Link className="nav-link" to="/login">
                     Login
