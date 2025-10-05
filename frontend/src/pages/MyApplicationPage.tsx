@@ -27,7 +27,7 @@ const MyApplicationPage: React.FC = () => {
     };
 
     fetchApps();
-  }, [token]); // ✅ depend on token
+  }, [token]); // depend on token
 
   if (loading) {
     return <p className="p-4 text-muted">Loading your applications...</p>;

@@ -10,18 +10,24 @@ interface Job {
   description: string;
 }
 
+interface Application {
+  job_id: number;
+  status: "pending" | "accepted" | "rejected";
+}
+
 const Dashboard: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [appliedJobs, setAppliedJobs] = useState<number[]>([]); // store job IDs user applied for
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const user = useSelector((state: RootState) => state.auth.user);
+  const token = useSelector((state: RootState) => state.auth.token);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        //  No token required — public endpoint for jobs
         const res = await fetch("http://localhost:3005/api/jobs");
         if (!res.ok) throw new Error("Failed to fetch jobs");
         const data = await res.json();
@@ -29,13 +35,34 @@ const Dashboard: React.FC = () => {
       } catch (err) {
         console.error("Error fetching jobs:", err);
         setError("Failed to load jobs. Please try again later.");
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchJobs();
-  }, []);
+    const fetchUserApplications = async () => {
+      if (!token) return; // skip if not logged in
+      try {
+        const res = await fetch("http://localhost:3005/api/applications/user", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data: Application[] = await res.json();
+          // collect all job IDs that the user has applied for
+          const appliedIds = data.map((app) => app.job_id);
+          setAppliedJobs(appliedIds);
+        }
+      } catch (err) {
+        console.error("Error fetching applications:", err);
+      }
+    };
+
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchJobs(), fetchUserApplications()]);
+      setLoading(false);
+    };
+
+    loadData();
+  }, [token]);
 
   if (loading) return <p className="p-4 text-muted">Loading jobs...</p>;
   if (error) return <p className="p-4 text-danger">{error}</p>;
@@ -62,48 +89,73 @@ const Dashboard: React.FC = () => {
         />
 
         <p className="text-muted">
-          Find exciting opportunities to advance your career. Jobs are updated regularly — check back often!
+          Find exciting opportunities to advance your career. Jobs are updated
+          regularly — check back often!
         </p>
       </div>
 
       <div className="row">
         {jobs.length > 0 ? (
-          jobs.map((job) => (
-            <div key={job.id} className="col-md-6 col-lg-4 mb-4">
-              <div className="card shadow-sm h-100">
-                <div className="card-body d-flex flex-column">
-                  <h5 className="card-title">{job.title}</h5>
-                  <h6 className="card-subtitle mb-2 text-muted">{job.location}</h6>
-                  <p className="card-text text-truncate">{job.description}</p>
+          jobs.map((job) => {
+            const alreadyApplied = appliedJobs.includes(job.id);
 
-                  <div className="mt-auto d-flex justify-content-between">
-                    <Link to={`/jobs/${job.id}`} className="btn btn-outline-primary btn-sm">
-                      View Details
-                    </Link>
+            return (
+              <div key={job.id} className="col-md-6 col-lg-4 mb-4">
+                <div className="card shadow-sm h-100 position-relative">
+                  {alreadyApplied && (
+                    <span
+                      className="badge bg-success position-absolute top-0 end-0 m-2"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      Applied
+                    </span>
+                  )}
 
-                    {/* ✅ Show Apply button only if logged in */}
-                    {user ? (
-                      <button
-                        onClick={() => navigate(`/apply/${job.id}`)}
-                        className="btn btn-primary btn-sm"
+                  <div className="card-body d-flex flex-column">
+                    <h5 className="card-title">{job.title}</h5>
+                    <h6 className="card-subtitle mb-2 text-muted">
+                      {job.location}
+                    </h6>
+                    <p className="card-text text-truncate">{job.description}</p>
+
+                    <div className="mt-auto d-flex justify-content-between">
+                      <Link
+                        to={`/jobs/${job.id}`}
+                        className="btn btn-outline-primary btn-sm"
                       >
-                        Apply
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() =>
-                          navigate(`/login?redirect=/apply/${job.id}`)
-                        }
-                        className="btn btn-primary btn-sm"
-                      >
-                        Apply
-                      </button>
-                    )}
+                        View Details
+                      </Link>
+
+                      {user ? (
+                        <button
+                          onClick={() =>
+                            !alreadyApplied && navigate(`/apply/${job.id}`)
+                          }
+                          className={`btn btn-sm ${
+                            alreadyApplied
+                              ? "btn-secondary disabled"
+                              : "btn-primary"
+                          }`}
+                          disabled={alreadyApplied}
+                        >
+                          {alreadyApplied ? "Already Applied" : "Apply"}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() =>
+                            navigate(`/login?redirect=/apply/${job.id}`)
+                          }
+                          className="btn btn-primary btn-sm"
+                        >
+                          Apply
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="col-12 text-center">
             <p className="text-muted">No jobs available at the moment.</p>

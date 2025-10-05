@@ -10,11 +10,11 @@ const ApplicationPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Get token from Redux (same as MyApplicationPage)
+  //  Get token from Redux (same as MyApplicationPage)
   const token = useSelector((state: RootState) => state.auth.token);
 
   useEffect(() => {
-    // ✅ Only fetch applications when token exists
+    //  Only fetch applications when token exists
     if (!token) return;
 
     const fetchApplications = async () => {
@@ -32,7 +32,7 @@ const ApplicationPage: React.FC = () => {
     fetchApplications();
   }, [token]); // depend on token like MyApplicationPage
 
-  // ✅ Handle Accept/Reject actions
+  // Handle Accept/Reject actions
   const handleRespond = async (
     id: number | string,
     status: "accepted" | "rejected",
@@ -52,7 +52,7 @@ const ApplicationPage: React.FC = () => {
     }
   };
 
-  // ✅ Filter applications by applicant name/email
+  //  Filter applications by applicant name/email
   const filteredApplications = applications.filter((app) =>
     [app.applicantName, app.applicantEmail]
       .join(" ")
@@ -60,7 +60,7 @@ const ApplicationPage: React.FC = () => {
       .includes(search.toLowerCase())
   );
 
-  // ✅ Consistent loading & error handling
+  // Consistent loading & error handling
   if (loading) {
     return <p className="p-4 text-muted">Loading applications...</p>;
   }
