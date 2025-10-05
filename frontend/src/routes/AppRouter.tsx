@@ -8,11 +8,11 @@ import JobDetails from "../pages/JobDetails";
 import ApplyJob from "../pages/ApplyJob";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
-import AdminDashboard from "../pages/AdminDashboard";
+import AdminDashboard from "../pages/adminDashboard";
 import ApplicationPage from "../pages/ApplicationPage";
 import MyApplicationPage from "../pages/MyApplicationPage";
 import UserManagement from "../pages/UserManagement";
-import MainLayout from "../layouts/MainLayout";
+import MainLayout from "../layouts/mainLayout";
 
 /* --------------------------
  ✅ Protected Route (for users)
