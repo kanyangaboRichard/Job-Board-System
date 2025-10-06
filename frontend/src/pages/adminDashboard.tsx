@@ -9,6 +9,7 @@ interface Job {
   description: string;
   company: string;
   salary: number;
+  deadline?: string; // ✅ new field
 }
 
 const AdminDashboard: React.FC = () => {
@@ -25,6 +26,7 @@ const AdminDashboard: React.FC = () => {
   const [location, setLocation] = useState("");
   const [salary, setSalary] = useState("");
   const [description, setDescription] = useState("");
+  const [deadline, setDeadline] = useState(""); // ✅ new state
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -55,8 +57,8 @@ const AdminDashboard: React.FC = () => {
   const handleSave = async () => {
     const salaryNum = Number(salary) || 0;
 
-    if (!title || !company || !location || !description) {
-      setError("Please fill in all fields.");
+    if (!title || !company || !location || !description || !deadline) {
+      setError("Please fill in all fields, including deadline.");
       return;
     }
 
@@ -78,6 +80,7 @@ const AdminDashboard: React.FC = () => {
           location,
           description,
           salary: salaryNum,
+          deadline, // ✅ include deadline
         }),
       });
 
@@ -88,12 +91,10 @@ const AdminDashboard: React.FC = () => {
       const savedJob = await res.json();
 
       if (editingJob) {
-        // ✅ Update existing job in UI
         setJobs((prev) =>
           prev.map((job) => (job.id === savedJob.id ? savedJob : job))
         );
       } else {
-        // ✅ Add new job from backend (with DB ID)
         setJobs((prev) => [savedJob, ...prev]);
       }
 
@@ -128,6 +129,7 @@ const AdminDashboard: React.FC = () => {
     setLocation("");
     setSalary("");
     setDescription("");
+    setDeadline(""); // ✅ reset
     setEditingJob(null);
     setShowModal(false);
     setError(null);
@@ -166,6 +168,14 @@ const AdminDashboard: React.FC = () => {
                   <h6 className="card-subtitle mb-2 text-muted">
                     {job.company} — {job.location}
                   </h6>
+
+                  {/* ✅ Display deadline */}
+                  {job.deadline && (
+                    <p className="text-danger small mb-1">
+                      Deadline: {new Date(job.deadline).toLocaleDateString()}
+                    </p>
+                  )}
+
                   <p className="card-text text-truncate">{job.description}</p>
                   <p className="fw-semibold mt-2">Salary: {job.salary} RWF</p>
 
@@ -179,6 +189,7 @@ const AdminDashboard: React.FC = () => {
                         setLocation(job.location);
                         setSalary(String(job.salary));
                         setDescription(job.description);
+                        setDeadline(job.deadline || ""); // ✅ pre-fill
                         setShowModal(true);
                       }}
                     >
@@ -247,6 +258,15 @@ const AdminDashboard: React.FC = () => {
                     value={salary}
                     onChange={(e) => setSalary(e.target.value)}
                   />
+
+                  {/* ✅ New Deadline Field */}
+                  <input
+                    className="form-control"
+                    type="date"
+                    value={deadline}
+                    onChange={(e) => setDeadline(e.target.value)}
+                  />
+
                   <textarea
                     className="form-control"
                     rows={3}

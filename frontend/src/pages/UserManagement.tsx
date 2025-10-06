@@ -17,7 +17,7 @@ const UserManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Build headers safely
+  // Build headers safely
   const getAuthHeaders = () => {
     const savedToken = token || localStorage.getItem("token");
     return {
@@ -26,7 +26,7 @@ const UserManagement: React.FC = () => {
     };
   };
 
-  // ✅ Fetch all users (Admin only)
+  // Fetch all users (Admin only)
   useEffect(() => {
     if (!user || user.role !== "admin") return;
     if (!token && !localStorage.getItem("token")) return;
@@ -46,7 +46,7 @@ const UserManagement: React.FC = () => {
         const data = await res.json();
         setUsers(data);
       } catch (err) {
-        console.error("❌ Error fetching users:", err);
+        console.error("Error fetching users:", err);
         setError((err as Error).message);
       } finally {
         setLoading(false);
@@ -56,7 +56,7 @@ const UserManagement: React.FC = () => {
     fetchUsers();
   }, [user, token]);
 
-  // ✅ Promote a user to admin
+  //  Promote a user to admin
   const handleMakeAdmin = async (id: number | string) => {
     try {
       const res = await fetch(`http://localhost:3005/api/users/${id}/make-admin`, {
@@ -77,10 +77,10 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  // ✅ Revoke admin rights (prevent self-revoke)
+  // Revoke admin rights (prevent self-revoke)
   const handleRevokeAdmin = async (id: number | string) => {
     if (String(user?.id) === String(id)) {
-      alert("⚠️ You cannot revoke your own admin privileges.");
+      alert(" You cannot revoke your own admin privileges.");
       return;
     }
 
@@ -103,7 +103,7 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  // ✅ Access Control
+  //  Access Control
   if (user?.role !== "admin") {
     return <p className="p-6 text-danger">Access denied — Admins only</p>;
   }

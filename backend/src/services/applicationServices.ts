@@ -10,7 +10,7 @@ export interface ApplicationRow {
   applicant_name?: string;
   applicant_email?: string;
   cover_letter?: string;
-  cv_url?: string; 
+  cv_url?: string;
   status: ApplicationStatus;
   response_note?: string | null;
   applied_at: Date;
@@ -70,14 +70,20 @@ export const getApplicationsByJobService = async (
   return result.rows;
 };
 
-/**
- * Get Applications by User (for "My Applications" page)
- */
+// Get Applications by User (for "My Applications" page)
+  //includes job_id now (used by frontend to show "Applied" badge)
+ 
 export const getUserApplicationsService = async (
   userId: number
 ): Promise<ApplicationRow[]> => {
   const result = await pool.query<ApplicationRow>(
-    `SELECT a.id, j.title AS job_title, a.status, a.response_note, a.applied_at
+    `SELECT 
+        a.id,
+        a.job_id,                 -- Added job_id here
+        j.title AS job_title,
+        a.status,
+        a.response_note,
+        a.applied_at
      FROM applications a
      JOIN jobs j ON j.id = a.job_id
      WHERE a.user_id = $1
@@ -88,9 +94,7 @@ export const getUserApplicationsService = async (
   return result.rows;
 };
 
-/**
- * Get All Applications (Admin view)
- */
+//Get All Applications (Admin view)
 export const getAllApplicationsService = async (): Promise<ApplicationRow[]> => {
   const result = await pool.query<ApplicationRow>(
     `SELECT a.id, j.title AS job_title, a.cover_letter, a.cv_url,
@@ -105,9 +109,9 @@ export const getAllApplicationsService = async (): Promise<ApplicationRow[]> => 
   return result.rows;
 };
 
-/**
- * Update Application Status (+ optional responseNote)
- */
+
+ // Update Application Status (+ optional responseNote)
+
 export const updateApplicationStatusService = async (
   id: string,
   status: ApplicationStatus,

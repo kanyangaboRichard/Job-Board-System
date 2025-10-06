@@ -41,15 +41,25 @@ export const getJobById = async (req: Request, res: Response) => {
 };
 
 // -------------------
-// CREATE job
+// CREATE job (Admin)
 // -------------------
 export const createJob = async (req: Request, res: Response) => {
   try {
-    const { title, company, location, description } = req.body;
+    const { title, company, location, description, deadline } = req.body;
     const user = req.user as { id: number };
 
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // ✅ Validate required fields
+    if (!title || !company || !location || !description) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // ✅ Optional: validate deadline format
+    if (deadline && isNaN(Date.parse(deadline))) {
+      return res.status(400).json({ error: "Invalid deadline format" });
     }
 
     const job = await jobService.createJobService(
@@ -57,7 +67,8 @@ export const createJob = async (req: Request, res: Response) => {
       company,
       location,
       description,
-      user.id
+      user.id,
+      deadline // ✅ new field
     );
 
     res.status(201).json(job);
@@ -68,24 +79,29 @@ export const createJob = async (req: Request, res: Response) => {
 };
 
 // -------------------
-// UPDATE job
+// UPDATE job (Admin)
 // -------------------
 export const updateJob = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const { title, company, location, description, deadline } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: "Job ID is required" });
     }
 
-    const { title, company, location, description } = req.body;
+    // ✅ Optional: validate deadline
+    if (deadline && isNaN(Date.parse(deadline))) {
+      return res.status(400).json({ error: "Invalid deadline format" });
+    }
 
     const job = await jobService.updateJobService(
       id,
       title,
       company,
       location,
-      description
+      description,
+      deadline // ✅ include deadline
     );
 
     res.json(job);
@@ -99,7 +115,7 @@ export const updateJob = async (req: Request, res: Response) => {
 };
 
 // -------------------
-// DELETE job
+// DELETE job (Admin)
 // -------------------
 export const deleteJob = async (req: Request, res: Response) => {
   try {

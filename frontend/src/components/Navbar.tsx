@@ -15,10 +15,11 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+    <nav className="navbar navbar-expand-lg navbar-dark bg-info sticky-top">
       <div className="container-fluid">
         <Link className="navbar-brand fw-bold" to="/">
-          Job Board
+          <span className="text-white">Job</span>
+          <span className="text-warning"> Board</span>
         </Link>
 
         <button
@@ -43,7 +44,7 @@ const Navbar: React.FC = () => {
                   </Link>
                 </li>
 
-                {/* ✅ Admin links */}
+                {/* Admin links */}
                 {user.role === "admin" && (
                   <>
                     <li className="nav-item">
@@ -64,7 +65,7 @@ const Navbar: React.FC = () => {
                   </>
                 )}
 
-                {/* ✅ Regular user links */}
+                {/* Regular user links */}
                 {user.role === "user" && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/applications">

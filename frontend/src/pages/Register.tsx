@@ -23,7 +23,7 @@ const Register: React.FC = () => {
 
     try {
       await register(name, email, password);
-      navigate("/login"); // ✅ use navigate instead of window.location
+      navigate("/login"); // use navigate instead of window.location
     } catch {
       setError("Registration failed");
     }
