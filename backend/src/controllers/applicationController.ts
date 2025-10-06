@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 import * as applicationService from "../services/applicationServices";
+import transporter from "../config/email"; 
 
 /**
  * Apply for a job (using CV link instead of file upload)
@@ -66,7 +67,8 @@ export const getApplicationsByJob: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Valid Job ID is required" });
     }
 
-    const applications = await applicationService.getApplicationsByJobService(jobId);
+    const applications =
+      await applicationService.getApplicationsByJobService(jobId);
     return res.json(applications);
   } catch (err) {
     console.error("Get applications error:", err);
@@ -83,11 +85,15 @@ export const getUserApplications: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const applications = await applicationService.getUserApplicationsService(req.user.id);
+    const applications = await applicationService.getUserApplicationsService(
+      req.user.id
+    );
     return res.json(applications);
   } catch (err) {
     console.error("Get user applications error:", err);
-    return res.status(500).json({ error: "Failed to fetch user applications" });
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch user applications" });
   }
 };
 
@@ -106,6 +112,7 @@ export const getAllApplications: RequestHandler = async (_req, res) => {
 
 /**
  * Update application status (Admin)
+ * Automatically sends an email to applicant after update
  */
 export const updateApplicationStatus: RequestHandler = async (req, res) => {
   try {
@@ -116,7 +123,9 @@ export const updateApplicationStatus: RequestHandler = async (req, res) => {
     };
 
     if (!id || isNaN(parseInt(id, 10))) {
-      return res.status(400).json({ error: "Valid Application ID is required" });
+      return res
+        .status(400)
+        .json({ error: "Valid Application ID is required" });
     }
 
     const validStatuses = ["pending", "accepted", "rejected"];
@@ -124,11 +133,44 @@ export const updateApplicationStatus: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Invalid status value" });
     }
 
+    // Update status in DB
     const updated = await applicationService.updateApplicationStatusService(
       id,
       status as any,
       responseNote
     );
+
+    //  Fetch applicant + job details for email
+    const details = await applicationService.getApplicationWithUserDetailsService(
+      id
+    );
+    const { applicant_email, applicant_name, job_title } = details;
+
+    //  Send email notification
+    try {
+      await transporter.sendMail({
+        from: `"Job Board System" <${process.env.EMAIL_USER}>`,
+        to: applicant_email,
+        cc: process.env.SYSTEM_EMAIL || process.env.EMAIL_USER, // optional copy
+        subject: `Your Application for "${job_title}" has been ${status}`,
+        html: `
+          <p>Hello ${applicant_name || "Applicant"},</p>
+          <p>Your application for <strong>${job_title}</strong> has been <strong>${status}</strong>.</p>
+          ${
+            responseNote
+              ? `<p><em>Message from Admin:</em> ${responseNote}</p>`
+              : ""
+          }
+          <p>Thank you for applying!</p>
+          <br/>
+          <p>Best regards,<br/>Job Board Team</p>
+        `,
+      });
+
+      console.log(` Email sent successfully to ${applicant_email}`);
+    } catch (emailErr) {
+      console.error(" Email sending failed:", emailErr);
+    }
 
     return res.json(updated);
   } catch (err: any) {

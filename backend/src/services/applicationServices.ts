@@ -70,16 +70,17 @@ export const getApplicationsByJobService = async (
   return result.rows;
 };
 
-// Get Applications by User (for "My Applications" page)
-  //includes job_id now (used by frontend to show "Applied" badge)
- 
+/**
+ * Get Applications by User (for "My Applications" page)
+ * includes job_id (used by frontend to show "Applied" badge)
+ */
 export const getUserApplicationsService = async (
   userId: number
 ): Promise<ApplicationRow[]> => {
   const result = await pool.query<ApplicationRow>(
     `SELECT 
         a.id,
-        a.job_id,                 -- Added job_id here
+        a.job_id,
         j.title AS job_title,
         a.status,
         a.response_note,
@@ -94,7 +95,9 @@ export const getUserApplicationsService = async (
   return result.rows;
 };
 
-//Get All Applications (Admin view)
+/**
+ * Get All Applications (Admin view)
+ */
 export const getAllApplicationsService = async (): Promise<ApplicationRow[]> => {
   const result = await pool.query<ApplicationRow>(
     `SELECT a.id, j.title AS job_title, a.cover_letter, a.cv_url,
@@ -109,9 +112,9 @@ export const getAllApplicationsService = async (): Promise<ApplicationRow[]> => 
   return result.rows;
 };
 
-
- // Update Application Status (+ optional responseNote)
-
+/**
+ * Update Application Status (+ optional responseNote)
+ */
 export const updateApplicationStatusService = async (
   id: string,
   status: ApplicationStatus,
@@ -130,4 +133,30 @@ export const updateApplicationStatusService = async (
   }
 
   return result.rows[0]!;
+};
+
+/**
+ * ✅ Get Application + User + Job Details (for Email Notifications)
+ */
+export const getApplicationWithUserDetailsService = async (id: string) => {
+  const result = await pool.query(
+    `SELECT 
+        a.id,
+        a.status,
+        a.response_note,
+        j.title AS job_title,
+        u.name AS applicant_name,
+        u.email AS applicant_email
+     FROM applications a
+     JOIN users u ON u.id = a.user_id
+     JOIN jobs j ON j.id = a.job_id
+     WHERE a.id = $1`,
+    [id]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error("Application not found");
+  }
+
+  return result.rows[0];
 };
