@@ -88,12 +88,12 @@ const AdminDashboard: React.FC = () => {
       const savedJob = await res.json();
 
       if (editingJob) {
-        // ✅ Update existing job in UI
+        //  Update existing job in UI
         setJobs((prev) =>
           prev.map((job) => (job.id === savedJob.id ? savedJob : job))
         );
       } else {
-        // ✅ Add new job from backend (with DB ID)
+        //  Add new job from backend (with DB ID)
         setJobs((prev) => [savedJob, ...prev]);
       }
 
@@ -104,7 +104,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // ✅ Delete Job
+  // Delete Job
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
 

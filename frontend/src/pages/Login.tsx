@@ -67,62 +67,81 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-4 col-sm-8">
-          <div className="card shadow-sm border-0">
-            <div className="card-body p-4">
-              <h4 className="card-title mb-3 text-center">Login</h4>
+    <div style={{ minHeight: "100vh", backgroundColor: "#e6f7ff" }} className="container-fluid p-0">
+      <div className="row gx-0">
+        {/* Left side for images (hidden on small screens) */}
+        <div className="col-md-7 d-none d-md-flex align-items-center justify-content-center">
+          <div className="w-100 h-100 d-flex align-items-center justify-content-center">
+            {/* Replace this with your image gallery or hero images */}
+            <div className="text-center">
+              <img
+                src="assets/pin.jpg"
+                alt="Hero"
+                style={{ maxWidth: "50%", borderRadius: 8 }}
+                className="img-fluid mb-3"
+              />
+              <h3 className="text-muted">Welcome Back to JobBoard</h3>
+            </div>
+          </div>
+        </div>
 
-              {error && <div className="alert alert-danger">{error}</div>}
+        {/* Right side: login card */}
+        <div className="col-12 col-md-5 d-flex align-items-center justify-content-center">
+          <div className="w-100" style={{ maxWidth: 420, padding: 24 }}>
+            <div className="card shadow-sm border-0">
+              <div className="card-body p-4">
+                <h4 className="card-title mb-3 text-center">Login</h4>
 
-              <form onSubmit={handleLogin}>
-                <div className="mb-3">
-                  <label className="form-label">Email</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                </div>
+                {error && <div className="alert alert-danger">{error}</div>}
 
-                <div className="mb-3">
-                  <label className="form-label">Password</label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                <form onSubmit={handleLogin}>
+                  <div className="mb-3">
+                    <label className="form-label">Email</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Password</label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary w-100"
+                    disabled={loading}
+                  >
+                    {loading ? "Logging in..." : "Login"}
+                  </button>
+                </form>
+
+                <div className="text-center my-3">OR</div>
+
+                <div className="text-center mb-3">
+                  <Link to="/register" className="d-block small">
+                    Don’t have an account? Register
+                  </Link>
                 </div>
 
                 <button
-                  type="submit"
-                  className="btn btn-primary w-100"
-                  disabled={loading}
+                  onClick={handleGoogleLogin}
+                  className="btn btn-danger w-100"
                 >
-                  {loading ? "Logging in..." : "Login"}
+                  <i className="bi bi-google me-2"></i> Sign in with Google
                 </button>
-              </form>
-
-              <div className="text-center my-3">OR</div>
-
-              <div className="text-center mb-3">
-                <Link to="/register" className="d-block small">
-                  Don’t have an account? Register
-                </Link>
               </div>
-
-              <button
-                onClick={handleGoogleLogin}
-                className="btn btn-danger w-100"
-              >
-                <i className="bi bi-google me-2"></i> Sign in with Google
-              </button>
             </div>
           </div>
         </div>

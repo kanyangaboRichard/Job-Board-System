@@ -22,7 +22,7 @@ const initialState: JobState = {
   error: null,
 };
 
-// ✅ Fetch jobs
+//  Fetch jobs
 export const fetchJobs = createAsyncThunk<Job[]>(
   "jobs/fetchAll",
   async (_, { rejectWithValue }) => {
@@ -36,7 +36,7 @@ export const fetchJobs = createAsyncThunk<Job[]>(
   }
 );
 
-// ✅ Add job
+//  Add job
 export const addJob = createAsyncThunk<Job, Omit<Job, "id">>(
   "jobs/add",
   async (job, { rejectWithValue }) => {
@@ -50,7 +50,7 @@ export const addJob = createAsyncThunk<Job, Omit<Job, "id">>(
   }
 );
 
-// ✅ Update job
+// Update job
 export const updateJob = createAsyncThunk<Job, Job>(
   "jobs/update",
   async (job, { rejectWithValue }) => {
@@ -64,7 +64,7 @@ export const updateJob = createAsyncThunk<Job, Job>(
   }
 );
 
-// ✅ Delete job
+//  Delete job
 export const deleteJob = createAsyncThunk<number, number>(
   "jobs/delete",
   async (id, { rejectWithValue }) => {

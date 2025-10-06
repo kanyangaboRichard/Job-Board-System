@@ -14,9 +14,8 @@ import MyApplicationPage from "../pages/MyApplicationPage";
 import UserManagement from "../pages/UserManagement";
 import MainLayout from "../layouts/mainLayout";
 
-/* --------------------------
- ✅ Protected Route (for users)
----------------------------*/
+
+//  Protected Route (for users)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
@@ -29,9 +28,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-/* --------------------------
- ✅ Admin-only Route
----------------------------*/
+ // Admin-only Route
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, user } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
@@ -53,9 +50,8 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
-/* --------------------------
- ✅ Main Router
----------------------------*/
+  //Main Router
+
 const AppRouter: React.FC = () => (
   <Routes>
     {/* Shared layout (includes Navbar) */}
@@ -82,7 +78,7 @@ const AppRouter: React.FC = () => (
         }
       />
 
-      {/* ✅ Admin routes (secure and stable) */}
+      {/*  Admin routes (secure and stable) */}
       <Route
         path="/admin"
         element={

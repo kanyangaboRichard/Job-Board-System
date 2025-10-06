@@ -31,7 +31,7 @@ const MainLayout: React.FC = () => {
       const decoded = jwtDecode<DecodedToken>(token);
       localStorage.setItem("token", token);
 
-      // ✅ Prevent overwriting an already-logged-in user
+      //  Prevent overwriting an already-logged-in user
       const existingUser = store.getState().auth.user;
       if (!existingUser || !existingUser.id) {
         dispatch({
@@ -48,7 +48,7 @@ const MainLayout: React.FC = () => {
         });
       }
 
-      // ✅ Redirect ONLY if this is a Google OAuth callback (?token)
+      // Redirect ONLY if this is a Google OAuth callback (?token)
       if (params.get("token")) {
         if (decoded.role === "admin") {
           navigate("/admin", { replace: true });
