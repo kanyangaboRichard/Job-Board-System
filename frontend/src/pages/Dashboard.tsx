@@ -2,13 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
 import { Link, useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode"; // correct for jwt-decode v4+
+import { jwtDecode } from "jwt-decode"; // correct import
 
 interface Job {
   id: number;
   title: string;
   location: string;
   description: string;
+  deadline?: string; // ✅ new field
 }
 
 interface Application {
@@ -17,7 +18,6 @@ interface Application {
 }
 
 interface DecodedToken {
-  id?: number;
   name?: string;
   email?: string;
   role?: string;
@@ -37,6 +37,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const storedToken = token || localStorage.getItem("token");
 
+    // ✅ Decode JWT to show user's name
     if (storedToken) {
       try {
         const decoded = jwtDecode<DecodedToken>(storedToken);
@@ -45,16 +46,17 @@ const Dashboard: React.FC = () => {
           localStorage.removeItem("token");
           setUsername("User");
         } else {
-          const displayName =
+          setUsername(
             decoded.name ||
-            (decoded.email ? decoded.email.split("@")[0] : "User");
-          setUsername(displayName);
+              (decoded.email ? decoded.email.split("@")[0] : "User")
+          );
         }
       } catch (err) {
         console.error("Error decoding token:", err);
       }
     }
 
+    // ✅ Fetch all jobs
     const fetchJobs = async () => {
       try {
         const res = await fetch("http://localhost:3005/api/jobs");
@@ -67,6 +69,7 @@ const Dashboard: React.FC = () => {
       }
     };
 
+    // ✅ Fetch user applications
     const fetchUserApplications = async () => {
       if (!storedToken) return;
       try {
@@ -127,7 +130,6 @@ const Dashboard: React.FC = () => {
           {jobs.length > 0 ? (
             jobs.map((job) => {
               const alreadyApplied = appliedJobs.includes(job.id);
-
               return (
                 <div key={job.id} className="col-md-6 col-lg-4 mb-4">
                   <div className="card shadow-sm h-100 position-relative">
@@ -139,15 +141,26 @@ const Dashboard: React.FC = () => {
                         Applied
                       </span>
                     )}
+
                     <div className="card-body d-flex flex-column">
+                      {/*  Job title */}
                       <h5 className="card-title">{job.title}</h5>
+
+                      {/* Location (muted) */}
                       <h6 className="card-subtitle mb-2 text-muted">
                         {job.location}
                       </h6>
-                      <p className="card-text text-truncate">{job.description}</p>
 
+                      {/* Deadline */}
+                      {job.deadline && (
+                        <p className="text-danger small mb-1">
+                          Deadline: {new Date(job.deadline).toLocaleDateString()}
+                        </p>
+                      )}
+
+                      {/*  Description (truncated) */}
+                      {/*  Buttons */}
                       <div className="mt-auto d-flex justify-content-between">
-                        {/* Always allow "View Details" */}
                         <Link
                           to={`/jobs/${job.id}`}
                           className="btn btn-outline-primary btn-sm"
@@ -155,25 +168,20 @@ const Dashboard: React.FC = () => {
                           View Details
                         </Link>
 
-                        {/* Apply button logic */}
                         {token ? (
-                          alreadyApplied ? (
-                            <button
-                              className="btn btn-success btn-sm"
-                              disabled
-                              style={{ cursor: "not-allowed", opacity: 0.8 }}
-                              title="You have already applied for this job"
-                            >
-                              Applied
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => navigate(`/apply/${job.id}`)}
-                              className="btn btn-primary btn-sm"
-                            >
-                              Apply
-                            </button>
-                          )
+                          <button
+                            onClick={() =>
+                              !alreadyApplied && navigate(`/apply/${job.id}`)
+                            }
+                            className={`btn btn-sm ${
+                              alreadyApplied
+                                ? "btn-secondary disabled"
+                                : "btn-primary"
+                            }`}
+                            disabled={alreadyApplied}
+                          >
+                            {alreadyApplied ? "Already Applied" : "Apply"}
+                          </button>
                         ) : (
                           <button
                             onClick={() =>
