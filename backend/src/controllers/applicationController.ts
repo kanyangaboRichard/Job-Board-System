@@ -3,7 +3,7 @@ import * as applicationService from "../services/applicationServices";
 import transporter from "../config/email"; 
 
 /**
- * Apply for a job (using CV link instead of file upload)
+ * Apply for a job (using CV link )
  */
 export const applyForJob: RequestHandler = async (req, res) => {
   try {
