@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import ApplicationCard from "../components/ApplicationCard";
-import { getApplications, respondToApplication, type Application } from "../api/applications";
+import {
+  getApplications,
+  respondToApplication,
+  type Application,
+} from "../api/applications";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
 
@@ -14,7 +18,6 @@ const ApplicationPage: React.FC = () => {
   const token = useSelector((state: RootState) => state.auth.token);
 
   useEffect(() => {
-    //  Only fetch applications when token exists
     if (!token) return;
 
     const fetchApplications = async () => {
@@ -30,7 +33,7 @@ const ApplicationPage: React.FC = () => {
     };
 
     fetchApplications();
-  }, [token]); // depend on token like MyApplicationPage
+  }, [token]);
 
   // Handle Accept/Reject actions
   const handleRespond = async (
@@ -43,16 +46,21 @@ const ApplicationPage: React.FC = () => {
       setApplications((prev) =>
         prev.map((app) =>
           app.id === id
-            ? { ...app, status: updated.status, responseNote: updated.responseNote }
+            ? {
+                ...app,
+                status: updated.status,
+                responseNote: updated.responseNote,
+              }
             : app
         )
       );
     } catch (err) {
       console.error("Failed to update application:", err);
+      alert("Failed to update application. Please try again.");
     }
   };
 
-  //  Filter applications by applicant name/email
+  //  Filter applications by applicant name or email
   const filteredApplications = applications.filter((app) =>
     [app.applicantName, app.applicantEmail]
       .join(" ")
@@ -73,7 +81,7 @@ const ApplicationPage: React.FC = () => {
     <div className="container py-4">
       <h1 className="mb-4">All Applications</h1>
 
-      {/* Search bar */}
+      {/*  Search bar */}
       <div className="mb-4">
         <input
           type="text"
@@ -100,10 +108,15 @@ const ApplicationPage: React.FC = () => {
                 responseNote={app.responseNote}
                 isAdmin
                 onAccept={() =>
-                  handleRespond(app.id, "accepted", "Congratulations! You're shortlisted.")
+                  handleRespond(
+                    app.id,
+                    "accepted",
+                    "Congratulations! You're shortlisted."
+                  )
                 }
-                onReject={() =>
-                  handleRespond(app.id, "rejected", "Unfortunately, we won’t move forward.")
+                // Pass the rejection reason dynamically from ApplicationCard
+                onReject={(reason) =>
+                  handleRespond(app.id, "rejected", reason)
                 }
               />
             </div>
