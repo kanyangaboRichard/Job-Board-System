@@ -9,7 +9,7 @@ interface Job {
   description: string;
   company: string;
   salary: number;
-  deadline?: string; // ✅ new field
+  deadline?: string; // new field
 }
 
 const AdminDashboard: React.FC = () => {
@@ -26,11 +26,11 @@ const AdminDashboard: React.FC = () => {
   const [location, setLocation] = useState("");
   const [salary, setSalary] = useState("");
   const [description, setDescription] = useState("");
-  const [deadline, setDeadline] = useState(""); // ✅ new state
+  const [deadline, setDeadline] = useState(""); // new state
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  // ✅ Fetch jobs from backend
+  // Fetch jobs from backend
   useEffect(() => {
     if (!token) return;
 
@@ -53,7 +53,7 @@ const AdminDashboard: React.FC = () => {
     fetchJobs();
   }, [token]);
 
-  // ✅ Save (Add or Edit)
+  //  Save (Add or Edit)
   const handleSave = async () => {
     const salaryNum = Number(salary) || 0;
 
@@ -80,7 +80,7 @@ const AdminDashboard: React.FC = () => {
           location,
           description,
           salary: salaryNum,
-          deadline, // ✅ include deadline
+          deadline, // 
         }),
       });
 
@@ -105,7 +105,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // ✅ Delete Job
+  //  Delete Job
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
 
@@ -129,7 +129,7 @@ const AdminDashboard: React.FC = () => {
     setLocation("");
     setSalary("");
     setDescription("");
-    setDeadline(""); // ✅ reset
+    setDeadline(""); //
     setEditingJob(null);
     setShowModal(false);
     setError(null);
@@ -169,7 +169,7 @@ const AdminDashboard: React.FC = () => {
                     {job.company} — {job.location}
                   </h6>
 
-                  {/* ✅ Display deadline */}
+                  {/*  Display deadline */}
                   {job.deadline && (
                     <p className="text-danger small mb-1">
                       Deadline: {new Date(job.deadline).toLocaleDateString()}
@@ -189,7 +189,7 @@ const AdminDashboard: React.FC = () => {
                         setLocation(job.location);
                         setSalary(String(job.salary));
                         setDescription(job.description);
-                        setDeadline(job.deadline || ""); // ✅ pre-fill
+                        setDeadline(job.deadline || ""); 
                         setShowModal(true);
                       }}
                     >
@@ -259,7 +259,7 @@ const AdminDashboard: React.FC = () => {
                     onChange={(e) => setSalary(e.target.value)}
                   />
 
-                  {/* ✅ New Deadline Field */}
+                  {/* New Deadline Field */}
                   <input
                     className="form-control"
                     type="date"

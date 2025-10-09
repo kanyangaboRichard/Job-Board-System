@@ -7,6 +7,7 @@ import authRoutes from "./routes/authRoutes";
 import jobRoutes from "./routes/jobRoutes";
 import applicationRoutes from "./routes/applicationRoutes";
 import userRouter from "./routes/userRouter";
+import adminRoutes from "./routes/adminRoutes";
 
 const app = express();
 
@@ -41,5 +42,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/users", userRouter);
+app.use("/api/admin", adminRoutes);
 
 export default app;

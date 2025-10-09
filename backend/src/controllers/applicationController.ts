@@ -1,44 +1,38 @@
 import { RequestHandler } from "express";
 import * as applicationService from "../services/applicationServices";
-import transporter from "../config/email"; 
+import transporter from "../config/email";
 
 /**
- * Apply for a job (using CV link )
+ * Apply for a job (using CV link)
  */
 export const applyForJob: RequestHandler = async (req, res) => {
   try {
     const { jobId } = req.params;
 
-    // Validate job ID
     if (!jobId || isNaN(parseInt(jobId, 10))) {
       return res.status(400).json({ error: "Valid Job ID is required" });
     }
 
-    // Ensure user is authenticated
     if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // Extract fields from body
     const { cover_letter, cv_url } = req.body as {
       cover_letter?: string;
       cv_url?: string;
     };
 
-    // Validate required fields
     if (!cover_letter || !cv_url) {
       return res
         .status(400)
         .json({ error: "Cover letter and CV URL are required" });
     }
 
-    // Optionally validate CV URL format
     const allowedDomains = ["https://", "http://"];
     if (!allowedDomains.some((prefix) => cv_url.startsWith(prefix))) {
       return res.status(400).json({ error: "Invalid CV URL format" });
     }
 
-    // Apply via service
     const application = await applicationService.applyForJobService(
       jobId,
       req.user.id,
@@ -133,7 +127,14 @@ export const updateApplicationStatus: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Invalid status value" });
     }
 
-    // Update status in DB
+    //  Require rejection reason if status is "rejected"
+    if (status === "rejected" && (!responseNote || responseNote.trim() === "")) {
+      return res.status(400).json({
+        error: "Please provide a reason for rejection (responseNote is required).",
+      });
+    }
+
+    //  Update status in DB
     const updated = await applicationService.updateApplicationStatusService(
       id,
       status as any,
@@ -141,30 +142,39 @@ export const updateApplicationStatus: RequestHandler = async (req, res) => {
     );
 
     //  Fetch applicant + job details for email
-    const details = await applicationService.getApplicationWithUserDetailsService(
-      id
-    );
+    const details = await applicationService.getApplicationWithUserDetailsService(id);
     const { applicant_email, applicant_name, job_title } = details;
 
     //  Send email notification
     try {
+      let emailBody = `
+        <p>Hello ${applicant_name || "Applicant"},</p>
+        <p>Your application for <strong>${job_title}</strong> has been <strong>${status}</strong>.</p>
+      `;
+
+      if (status === "rejected" && responseNote) {
+        emailBody += `
+          <div style="background-color:#ffe6e6; padding:10px; border-radius:8px; margin:10px 0;">
+            <p><strong>Reason for rejection:</strong></p>
+            <p style="color:#b30000;">${responseNote}</p>
+          </div>
+        `;
+      } else if (responseNote) {
+        emailBody += `<p><em>Message from Admin:</em> ${responseNote}</p>`;
+      }
+
+      emailBody += `
+        <p>Thank you for applying!</p>
+        <br/>
+        <p>Best regards,<br/>Job Board Team</p>
+      `;
+
       await transporter.sendMail({
         from: `"Job Board System" <${process.env.EMAIL_USER}>`,
         to: applicant_email,
-        cc: process.env.SYSTEM_EMAIL || process.env.EMAIL_USER, // optional copy
+        cc: process.env.SYSTEM_EMAIL || process.env.EMAIL_USER,
         subject: `Your Application for "${job_title}" has been ${status}`,
-        html: `
-          <p>Hello ${applicant_name || "Applicant"},</p>
-          <p>Your application for <strong>${job_title}</strong> has been <strong>${status}</strong>.</p>
-          ${
-            responseNote
-              ? `<p><em>Message from Admin:</em> ${responseNote}</p>`
-              : ""
-          }
-          <p>Thank you for applying!</p>
-          <br/>
-          <p>Best regards,<br/>Job Board Team</p>
-        `,
+        html: emailBody,
       });
 
       console.log(` Email sent successfully to ${applicant_email}`);

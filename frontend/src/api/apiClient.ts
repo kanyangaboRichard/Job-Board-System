@@ -1,5 +1,5 @@
 // src/api/apiClient.ts
-import axios from "axios";
+import axios, {  type InternalAxiosRequestConfig, type AxiosRequestHeaders } from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3005/api";
 
@@ -9,7 +9,7 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// ✅ Utility function to safely extract token from persisted Redux
+// Utility function to safely extract token from persisted Redux
 function getStoredToken(): string | null {
   // Try plain token (set manually in MainLayout or login)
   const directToken = localStorage.getItem("token");
@@ -29,21 +29,24 @@ function getStoredToken(): string | null {
   }
 }
 
-// ✅ Intercept requests and attach token dynamically
+// Intercept requests and attach token dynamically
 api.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = getStoredToken();
 
     if (token) {
+      // Ensure headers exist and have the correct AxiosRequestHeaders type
+      const existingHeaders = config.headers as AxiosRequestHeaders | undefined;
       config.headers = {
-        ...config.headers,
+        ...(existingHeaders as Record<string, string | number | boolean>),
         Authorization: `Bearer ${token}`,
-      };
+      } as AxiosRequestHeaders;
+
       if (import.meta.env.DEV) {
-        console.log("✅ Attaching token:", token);
+        console.log(" Attaching token:", token);
       }
     } else if (import.meta.env.DEV) {
-      console.warn("🚫 No token found (yet) in persisted auth slice");
+      console.warn("No token found (yet) in persisted auth slice");
     }
 
     return config;
