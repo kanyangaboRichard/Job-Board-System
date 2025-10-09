@@ -157,6 +157,10 @@ const Dashboard: React.FC = () => {
                           Deadline: {new Date(job.deadline).toLocaleDateString()}
                         </p>
                       )}
+                      {/*  Description */}
+                      <p className="card-text text-truncate">{job.description}</p>
+                      
+                      
 
                       {/*  Description (truncated) */}
                       {/*  Buttons */}

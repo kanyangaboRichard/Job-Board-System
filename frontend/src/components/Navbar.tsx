@@ -15,13 +15,15 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-info sticky-top">
+    <nav className="navbar navbar-expand-lg navbar-dark bg-info sticky-top shadow-sm">
       <div className="container-fluid">
+        {/* Brand */}
         <Link className="navbar-brand fw-bold" to="/">
           <span className="text-white">Job</span>
           <span className="text-warning"> Board</span>
         </Link>
 
+        {/* Toggle button for mobile */}
         <button
           className="navbar-toggler"
           type="button"
@@ -34,17 +36,19 @@ const Navbar: React.FC = () => {
           <span className="navbar-toggler-icon"></span>
         </button>
 
+        {/* Navbar links */}
         <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto">
+          <ul className="navbar-nav ms-auto align-items-lg-center">
             {user ? (
               <>
+                {/* Common links for all logged-in users */}
                 <li className="nav-item me-2">
                   <Link className="nav-link" to="/">
                     Home
                   </Link>
                 </li>
 
-                {/* Admin links */}
+                {/* 🔐 Admin links */}
                 {user.role === "admin" && (
                   <>
                     <li className="nav-item">
@@ -62,10 +66,16 @@ const Navbar: React.FC = () => {
                         Manage Users
                       </Link>
                     </li>
+                    {/* 🧮 Added Admin Statistics link */}
+                    <li className="nav-item">
+                      <Link className="nav-link" to="/admin/stats">
+                        Statistics
+                      </Link>
+                    </li>
                   </>
                 )}
 
-                {/* Regular user links */}
+                {/* 👤 Regular user links */}
                 {user.role === "user" && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/applications">
@@ -74,16 +84,18 @@ const Navbar: React.FC = () => {
                   </li>
                 )}
 
+                {/* Logout button */}
                 <li className="nav-item">
                   <button
                     onClick={handleLogout}
-                    className="btn btn-light btn-sm ms-2"
+                    className="btn btn-outline-light btn-sm ms-2"
                   >
                     Logout
                   </button>
                 </li>
               </>
             ) : (
+              // 🔓 If not logged in
               <>
                 <li className="nav-item">
                   <Link className="nav-link" to="/login">
