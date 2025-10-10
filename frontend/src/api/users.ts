@@ -18,7 +18,7 @@ const withAuth = () => ({
 });
 
 /**
- * ✅ Fetch all users (admin only)
+ * Fetch all users (admin only)
  */
 export const getUsers = async (): Promise<User[]> => {
   const res = await api.get<User[]>("/users", withAuth());
@@ -26,7 +26,7 @@ export const getUsers = async (): Promise<User[]> => {
 };
 
 /**
- * ✅ Promote user to admin
+ *  Promote user to admin
  */
 export const promoteUser = async (id: number | string): Promise<User> => {
   const res = await api.patch<User>(`/users/${id}/make-admin`, null, withAuth());
@@ -34,7 +34,7 @@ export const promoteUser = async (id: number | string): Promise<User> => {
 };
 
 /**
- * ✅ Revoke admin rights
+ *  Revoke admin rights
  */
 export const revokeUserAdmin = async (id: number | string): Promise<User> => {
   const res = await api.patch<User>(`/users/${id}/revoke-admin`, null, withAuth());
@@ -42,7 +42,7 @@ export const revokeUserAdmin = async (id: number | string): Promise<User> => {
 };
 
 /**
- * ✅ Delete user (optional)
+ * Delete user (optional)
  */
 export const deleteUser = async (
   id: number | string

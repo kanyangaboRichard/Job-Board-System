@@ -10,7 +10,7 @@ interface JwtPayload {
   role: string;
 }
 
-// ✅ JWT Strategy
+//  JWT Strategy
 passport.use(
   new JwtStrategy(
     {
@@ -28,7 +28,7 @@ passport.use(
         const user = result.rows[0];
         if (!user) return done(null, false);
 
-        // ✅ Return full user object to Passport
+        // Return full user object to Passport
         return done(null, {
           id: user.id,
           email: user.email,
@@ -36,14 +36,14 @@ passport.use(
           name: user.name,
         });
       } catch (err) {
-        console.error("❌ JWT verification error:", err);
+        console.error(" JWT verification error:", err);
         return done(err, false);
       }
     }
   )
 );
 
-// ✅ Google OAuth Strategy
+// Google OAuth Strategy
 passport.use(
   new GoogleStrategy(
     {

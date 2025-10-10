@@ -27,7 +27,7 @@ const initialState: AuthState = {
   error: null,
 };
 
-// ✅ Helper to extract error messages from API responses
+//  Helper to extract error messages from API responses
 const extractErrorMessage = (error: unknown, fallback: string): string => {
   const axiosError = error as {
     response?: { data?: { error?: string; message?: string } };
@@ -41,7 +41,7 @@ const extractErrorMessage = (error: unknown, fallback: string): string => {
   );
 };
 
-// ✅ LOGIN thunk
+//  LOGIN thunk
 export const login = createAsyncThunk<
   AuthResponse,
   { email: string; password: string },
@@ -55,7 +55,7 @@ export const login = createAsyncThunk<
   }
 });
 
-// ✅ REGISTER thunk
+//  REGISTER thunk
 export const register = createAsyncThunk<
   AuthResponse,
   { name: string; email: string; password: string },
@@ -69,7 +69,7 @@ export const register = createAsyncThunk<
   }
 });
 
-// ✅ Slice
+// Slice
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -90,7 +90,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
-        // ✅ Clear old persisted data first
+        //  Clear old persisted data first
         localStorage.removeItem("persist:root");
 
         state.loading = false;

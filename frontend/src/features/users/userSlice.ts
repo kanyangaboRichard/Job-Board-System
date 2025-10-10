@@ -20,13 +20,13 @@ const initialState: UserState = {
   error: null,
 };
 
-// ✅ Fetch all users
+// Fetch all users
 export const fetchUsers = createAsyncThunk("users/fetchAll", async () => {
   const res = await api.get<User[]>("/users");
   return res.data;
 });
 
-// ✅ Make admin
+//  Make admin
 export const makeAdmin = createAsyncThunk(
   "users/makeAdmin",
   async (id: number | string) => {
@@ -35,7 +35,7 @@ export const makeAdmin = createAsyncThunk(
   }
 );
 
-// ✅ Revoke admin
+//  Revoke admin
 export const revokeAdmin = createAsyncThunk(
   "users/revokeAdmin",
   async (id: number | string) => {
@@ -44,7 +44,7 @@ export const revokeAdmin = createAsyncThunk(
   }
 );
 
-// ✅ Delete user
+// Delete user
 export const deleteUser = createAsyncThunk(
   "users/delete",
   async (id: number | string) => {

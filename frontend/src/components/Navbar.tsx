@@ -48,7 +48,7 @@ const Navbar: React.FC = () => {
                   </Link>
                 </li>
 
-                {/* 🔐 Admin links */}
+                {/*Admin links */}
                 {user.role === "admin" && (
                   <>
                     <li className="nav-item">
@@ -66,7 +66,7 @@ const Navbar: React.FC = () => {
                         Manage Users
                       </Link>
                     </li>
-                    {/* 🧮 Added Admin Statistics link */}
+                    {/* Added Admin Statistics link */}
                     <li className="nav-item">
                       <Link className="nav-link" to="/admin/stats">
                         Statistics
@@ -75,7 +75,7 @@ const Navbar: React.FC = () => {
                   </>
                 )}
 
-                {/* 👤 Regular user links */}
+                {/*  Regular user links */}
                 {user.role === "user" && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/applications">
@@ -95,7 +95,7 @@ const Navbar: React.FC = () => {
                 </li>
               </>
             ) : (
-              // 🔓 If not logged in
+              //  If not logged in
               <>
                 <li className="nav-item">
                   <Link className="nav-link" to="/login">

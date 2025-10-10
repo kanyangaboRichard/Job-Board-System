@@ -78,9 +78,9 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// -------------------
+
 // Google OAuth start
-// -------------------
+
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
 // -------------------
