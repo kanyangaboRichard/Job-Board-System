@@ -8,6 +8,7 @@ import jobRoutes from "./routes/jobRoutes";
 import applicationRoutes from "./routes/applicationRoutes";
 import userRouter from "./routes/userRouter";
 import adminRoutes from "./routes/adminRoutes";
+import adminMonthlyReport from "./routes/adminMonthlyReport";
 
 const app = express();
 
@@ -43,5 +44,6 @@ app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminMonthlyReport);
 
 export default app;

@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../features/auth/authSlice";
 import type { RootState } from "../store/store";
@@ -41,50 +41,91 @@ const Navbar: React.FC = () => {
           <ul className="navbar-nav ms-auto align-items-lg-center">
             {user ? (
               <>
-                {/* Common links for all logged-in users */}
+                {/* Common link */}
                 <li className="nav-item me-2">
-                  <Link className="nav-link" to="/">
+                  <NavLink
+                    to="/"
+                    className={({ isActive }) =>
+                      `nav-link ${isActive ? "fw-bold text-white" : ""}`
+                    }
+                  >
                     Home
-                  </Link>
+                  </NavLink>
                 </li>
 
-                {/*Admin links */}
+                {/* Admin links */}
                 {user.role === "admin" && (
                   <>
                     <li className="nav-item">
-                      <Link className="nav-link" to="/admin">
+                      <NavLink
+                        to="/admin"
+                        className={({ isActive }) =>
+                          `nav-link ${isActive ? "fw-bold text-white" : ""}`
+                        }
+                      >
                         Dashboard
-                      </Link>
+                      </NavLink>
                     </li>
                     <li className="nav-item">
-                      <Link className="nav-link" to="/admin/applications">
+                      <NavLink
+                        to="/admin/applications"
+                        className={({ isActive }) =>
+                          `nav-link ${isActive ? "fw-bold text-white" : ""}`
+                        }
+                      >
                         Applications
-                      </Link>
+                      </NavLink>
                     </li>
                     <li className="nav-item">
-                      <Link className="nav-link" to="/admin/users">
+                      <NavLink
+                        to="/admin/users"
+                        className={({ isActive }) =>
+                          `nav-link ${isActive ? "fw-bold text-white" : ""}`
+                        }
+                      >
                         Manage Users
-                      </Link>
+                      </NavLink>
                     </li>
-                    {/* Added Admin Statistics link */}
                     <li className="nav-item">
-                      <Link className="nav-link" to="/admin/stats">
+                      <NavLink
+                        to="/admin/stats"
+                        className={({ isActive }) =>
+                          `nav-link ${isActive ? "fw-bold text-white" : ""}`
+                        }
+                      >
                         Statistics
-                      </Link>
+                      </NavLink>
+                    </li>
+
+                    {/*  New Monthly Report Link */}
+                    <li className="nav-item">
+                      <NavLink
+                        to="/admin/report"
+                        className={({ isActive }) =>
+                          `nav-link ${isActive ? "fw-bold text-white" : ""}`
+                        }
+                      >
+                        Monthly Report
+                      </NavLink>
                     </li>
                   </>
                 )}
 
-                {/*  Regular user links */}
+                {/* User-only links */}
                 {user.role === "user" && (
                   <li className="nav-item">
-                    <Link className="nav-link" to="/applications">
+                    <NavLink
+                      to="/applications"
+                      className={({ isActive }) =>
+                        `nav-link ${isActive ? "fw-bold text-white" : ""}`
+                      }
+                    >
                       My Applications
-                    </Link>
+                    </NavLink>
                   </li>
                 )}
 
-                {/* Logout button */}
+                {/* Logout */}
                 <li className="nav-item">
                   <button
                     onClick={handleLogout}
@@ -95,17 +136,27 @@ const Navbar: React.FC = () => {
                 </li>
               </>
             ) : (
-              //  If not logged in
+              // Not logged in
               <>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/login">
+                  <NavLink
+                    to="/login"
+                    className={({ isActive }) =>
+                      `nav-link ${isActive ? "fw-bold text-white" : ""}`
+                    }
+                  >
                     Login
-                  </Link>
+                  </NavLink>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/register">
+                  <NavLink
+                    to="/register"
+                    className={({ isActive }) =>
+                      `nav-link ${isActive ? "fw-bold text-white" : ""}`
+                    }
+                  >
                     Register
-                  </Link>
+                  </NavLink>
                 </li>
               </>
             )}
