@@ -21,7 +21,7 @@ const AdminStats: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get("http://localhost:3005/api/admin/stats", {
+        const res = await axios.get<Stats>("http://localhost:3005/api/admin/stats", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setStats(res.data);

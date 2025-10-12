@@ -1,67 +1,51 @@
 // src/api/apiClient.ts
-import axios, {  type InternalAxiosRequestConfig, type AxiosRequestHeaders } from "axios";
+import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3005/api";
+// Use Vite environment variable or fallback
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3005/api";
 
-const api = axios.create({
-  baseURL: API_URL,
+// Create shared Axios instance
+export const api = axios.create({
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });
 
-// Utility function to safely extract token from persisted Redux
-function getStoredToken(): string | null {
-  // Try plain token (set manually in MainLayout or login)
-  const directToken = localStorage.getItem("token");
-  if (directToken) return directToken;
+//Helper: Get Authorization header dynamically
+export const getAuthHeader = () => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found. Please log in again.");
 
-  // Fallback: try Redux-persisted state
-  const persistedRoot = localStorage.getItem("persist:root");
-  if (!persistedRoot) return null;
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    withCredentials: true,
+  };
+};
 
-  try {
-    const parsedRoot = JSON.parse(persistedRoot);
-    const authData = parsedRoot.auth ? JSON.parse(parsedRoot.auth) : null;
-    return authData?.token || null;
-  } catch (err) {
-    console.error("Error parsing persisted token:", err);
-    return null;
-  }
-}
-
-// Intercept requests and attach token dynamically
+//  Interceptor: Attach token automatically
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = getStoredToken();
-
+  (config) => {
+    const token = localStorage.getItem("token");
     if (token) {
-      // Ensure headers exist and have the correct AxiosRequestHeaders type
-      const existingHeaders = config.headers as AxiosRequestHeaders | undefined;
-      config.headers = {
-        ...(existingHeaders as Record<string, string | number | boolean>),
-        Authorization: `Bearer ${token}`,
-      } as AxiosRequestHeaders;
-
-      if (import.meta.env.DEV) {
-        console.log(" Attaching token:", token);
-      }
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
     } else if (import.meta.env.DEV) {
-      console.warn("No token found (yet) in persisted auth slice");
+      console.warn(" No token found (persisted auth may not be loaded yet)");
     }
-
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-//  Handle unauthorized responses gracefully
+//  Interceptor: Handle global 401s
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      console.warn(" Unauthorized – token expired, invalid, or missing");
-      // optional: redirect or clear persisted state here
-      // localStorage.removeItem("token");
+      console.warn(" Unauthorized – invalid or expired token.");
+      // Optionally redirect or clear token here
     }
     return Promise.reject(err);
   }

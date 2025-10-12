@@ -1,34 +1,46 @@
-/**
- * @file __tests__/Api.test.ts
- * Tests for API layer integration (mocked with Axios)
- */
+// frontend/tests/Api.test.ts
 
 import axios from "axios";
-import { login } from "../src/api/auth"; // adjust path if needed
+import { vi, describe, it, expect, beforeEach } from "vitest";
+import { login } from "../src/api/auth";
 
-// Mock Axios globally
-jest.mock("axios");
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+// Mock Axios (used by apiClient)
+vi.mock("axios", () => {
+  const mockAxios = {
+    create: vi.fn(() => mockAxios),
+    post: vi.fn(),
+    get: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+  return { default: mockAxios };
+});
+
+const mockedAxios = axios as unknown as {
+  post: ReturnType<typeof vi.fn>;
+  get: ReturnType<typeof vi.fn>;
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("API Integration Tests", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it("calls /api/auth/login and returns token", async () => {
+  it("calls /auth/login and returns token", async () => {
     mockedAxios.post.mockResolvedValueOnce({
-      data: {
-        token: "fake-token",
-        user: { email: "test@example.com" },
-      },
+      data: { token: "fake-token", user: { email: "test@example.com" } },
     });
 
     const res = await login("test@example.com", "123456");
 
-    expect(mockedAxios.post).toHaveBeenCalledWith(
-      "/api/auth/login",
-      { email: "test@example.com", password: "123456" }
-    );
+    expect(mockedAxios.post).toHaveBeenCalledWith("/auth/login", {
+      email: "test@example.com",
+      password: "123456",
+    });
 
     expect(res.token).toBe("fake-token");
     expect(res.user.email).toBe("test@example.com");
@@ -57,9 +69,9 @@ describe("API Integration Tests", () => {
       "Invalid credentials"
     );
 
-    expect(mockedAxios.post).toHaveBeenCalledWith(
-      "/api/auth/login",
-      { email: "wrong@example.com", password: "badpassword" }
-    );
+    expect(mockedAxios.post).toHaveBeenCalledWith("/auth/login", {
+      email: "wrong@example.com",
+      password: "badpassword",
+    });
   });
 });

@@ -1,39 +1,60 @@
-/**
- * @file __tests__/Auth.test.tsx
- * Tests for Login component UI and behavior.
- */
-
+// tests/Auth.test.tsx
+import React from "react";
+import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import "@testing-library/jest-dom";
+import { vi, describe, it, beforeEach, expect } from "vitest";
+import { Provider } from "react-redux";
+import { configureStore } from "@reduxjs/toolkit";
+import { MemoryRouter } from "react-router-dom";
 
-// Import your Login component
+// 🧩 Partial mock: mock only the login thunk, keep the rest real
+vi.mock("../src/features/auth/authSlice", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/features/auth/authSlice")>();
+  return {
+    ...actual,
+    login: vi.fn(() => ({
+      type: "auth/login/fulfilled",
+      payload: { user: { email: "test@example.com", role: "user" } },
+    })),
+  };
+});
+
+import * as authSlice from "../src/features/auth/authSlice";
+import authReducer from "../src/features/auth/authSlice";
 import Login from "../src/pages/Login";
 
-// Mock the API module used by the Login page
-jest.mock("../src/api/auth", () => ({
-  login: jest.fn().mockResolvedValue({
-    token: "fake-jwt-token",
-    user: { email: "test@example.com" },
-  }),
-}));
+// ✅ Helper: Render component with Redux store + Router
+function renderWithProviders(ui: React.ReactNode) {
+  const store = configureStore({
+    reducer: { auth: authReducer },
+    preloadedState: {
+      auth: { token: null, user: null, loading: false, error: null },
+    },
+  });
 
-import { login } from "../src/api/auth";
+  return render(
+    <Provider store={store}>
+      <MemoryRouter initialEntries={["/login"]}>{ui}</MemoryRouter>
+    </Provider>
+  );
+}
 
-describe("Authentication UI", () => {
+describe("Authentication UI (partial mock)", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders the login form correctly", () => {
-    render(<Login />);
+    renderWithProviders(<Login />);
+
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument();
   });
 
-  it("calls login API when form is submitted", async () => {
-    render(<Login />);
+  it("dispatches login thunk with correct payload when form is submitted", async () => {
+    renderWithProviders(<Login />);
 
     const emailInput = screen.getByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);
@@ -43,6 +64,9 @@ describe("Authentication UI", () => {
     await userEvent.type(passwordInput, "123456");
     await userEvent.click(loginButton);
 
-    expect(login).toHaveBeenCalledWith("test@example.com", "123456");
+    expect(authSlice.login).toHaveBeenCalledWith({
+      email: "test@example.com",
+      password: "123456",
+    });
   });
 });
