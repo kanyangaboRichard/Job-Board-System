@@ -7,29 +7,31 @@
     "module": "ESNext",
     "skipLibCheck": true,
 
-    /* Bundler mode */
+    /*  Bundler mode for Vite */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
 
-    /* JSX for React components */
+    /*  JSX for React */
     "jsx": "react-jsx",
 
-    /*  Axios import issue */
+    /*  Interop for axios imports */
     "esModuleInterop": true,
 
-    /* Linting */
+    /*  Linting & Strict mode */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    /*  Jest-specific types */
-    "types": ["jest", "@testing-library/jest-dom"]
+    /* Base URL & Paths */
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
-  "include": ["src", "tests", "jest.setup.ts", "tests"]
+  "include": ["src"]
 }

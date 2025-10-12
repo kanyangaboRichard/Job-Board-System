@@ -14,13 +14,13 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { loading, user } = useSelector((state: RootState) => state.auth);
 
-  //  Memoized redirect path — never changes shape
+  // ✅ Compute redirect safely
   const redirect = useMemo(() => {
     const param = new URLSearchParams(location.search).get("redirect");
     return param && param !== "/login" ? param : "/";
   }, [location.search]);
 
-  // Handle regular login
+  // ✅ Handle login submission
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -38,20 +38,18 @@ const Login: React.FC = () => {
     }
   };
 
-  // Handle Google OAuth callback
+  // ✅ Handle Google OAuth redirect
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const googleToken = params.get("token");
 
     if (googleToken) {
       localStorage.setItem("googleToken", googleToken);
-      if (location.pathname === "/login") {
-        navigate("/", { replace: true });
-      }
+      if (location.pathname === "/login") navigate("/", { replace: true });
     }
   }, [location.pathname, location.search, navigate]);
 
-  // Auto-redirect if already logged in
+  // ✅ Auto-redirect if already logged in
   useEffect(() => {
     if (user && location.pathname === "/login") {
       const target = user.role === "admin" ? "/admin" : redirect;
@@ -59,7 +57,7 @@ const Login: React.FC = () => {
     }
   }, [user, redirect, navigate, location.pathname]);
 
-  // Google login trigger
+  // ✅ Google login
   const handleGoogleLogin = () => {
     window.location.href = `http://localhost:3005/api/auth/google?redirect=${encodeURIComponent(
       redirect
@@ -67,12 +65,14 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#e6f7ff" }} className="container-fluid p-0">
+    <div
+      style={{ minHeight: "100vh", backgroundColor: "#e6f7ff" }}
+      className="container-fluid p-0"
+    >
       <div className="row gx-0">
-        {/* Left side for images (hidden on small screens) */}
+        {/* Left side hero */}
         <div className="col-md-7 d-none d-md-flex align-items-center justify-content-center">
           <div className="w-100 h-100 d-flex align-items-center justify-content-center">
-            {/* Replace this with your image gallery or hero images */}
             <div className="text-center">
               <img
                 src="assets/pin.jpg"
@@ -85,7 +85,7 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* Right side: login card */}
+        {/* Right side form */}
         <div className="col-12 col-md-5 d-flex align-items-center justify-content-center">
           <div className="w-100" style={{ maxWidth: 420, padding: 24 }}>
             <div className="card shadow-sm border-0">
@@ -96,8 +96,12 @@ const Login: React.FC = () => {
 
                 <form onSubmit={handleLogin}>
                   <div className="mb-3">
-                    <label className="form-label">Email</label>
+                    <label htmlFor="email" className="form-label">
+                      Email
+                    </label>
                     <input
+                      id="email"
+                      name="email"
                       type="email"
                       className="form-control"
                       value={email}
@@ -108,8 +112,12 @@ const Login: React.FC = () => {
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label">Password</label>
+                    <label htmlFor="password" className="form-label">
+                      Password
+                    </label>
                     <input
+                      id="password"
+                      name="password"
                       type="password"
                       className="form-control"
                       value={password}

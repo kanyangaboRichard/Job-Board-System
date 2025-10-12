@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
+import axios from "axios";
 
 interface Job {
   id: number;
@@ -9,7 +10,16 @@ interface Job {
   description: string;
   company: string;
   salary: number;
-  deadline?: string; // new field
+  deadline?: string; 
+}
+
+interface Stats {
+  users: number;
+  jobs: number;
+  applications: number;
+  pending: number;
+  accepted: number;
+  rejected: number;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -17,20 +27,21 @@ const AdminDashboard: React.FC = () => {
   const token = useSelector((state: RootState) => state.auth.token);
 
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Form state
+  // Form states
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
   const [location, setLocation] = useState("");
   const [salary, setSalary] = useState("");
   const [description, setDescription] = useState("");
-  const [deadline, setDeadline] = useState(""); // new state
+  const [deadline, setDeadline] = useState("");
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  // Fetch jobs from backend
+  // Fetch Jobs
   useEffect(() => {
     if (!token) return;
 
@@ -53,7 +64,25 @@ const AdminDashboard: React.FC = () => {
     fetchJobs();
   }, [token]);
 
-  //  Save (Add or Edit)
+  // Fetch Stats
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get<Stats>("http://localhost:3005/api/admin/stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setStats(res.data);
+      } catch (err) {
+        console.error("Error fetching stats:", err);
+      }
+    };
+
+    fetchStats();
+  }, [token]);
+
+  // Save (Add or Edit)
   const handleSave = async () => {
     const salaryNum = Number(salary) || 0;
 
@@ -80,13 +109,11 @@ const AdminDashboard: React.FC = () => {
           location,
           description,
           salary: salaryNum,
-          deadline, // 
+          deadline,
         }),
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to save job");
-      }
+      if (!res.ok) throw new Error("Failed to save job");
 
       const savedJob = await res.json();
 
@@ -105,7 +132,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  //  Delete Job
+  // Delete Job
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
 
@@ -129,7 +156,7 @@ const AdminDashboard: React.FC = () => {
     setLocation("");
     setSalary("");
     setDescription("");
-    setDeadline(""); //
+    setDeadline("");
     setEditingJob(null);
     setShowModal(false);
     setError(null);
@@ -139,23 +166,52 @@ const AdminDashboard: React.FC = () => {
   if (user?.role !== "admin")
     return <p className="p-4 text-danger">Access denied.</p>;
   if (loading) return <p className="p-4 text-muted">Loading jobs...</p>;
-  if (error) return <p className="p-4 text-danger">{error}</p>;
 
   return (
     <div className="container mt-5">
-      <div className="text-center mb-4">
-        <h2 className="fw-bold">Admin Dashboard</h2>
+      {/* Heading */}
+      <div className="text-center mb-4 bg-white py-3 sticky-top" style={{ top: 0, zIndex: 1000 }}>
+        <h2 className="fw-bold text-primary">Admin Dashboard</h2>
         <p className="text-muted">
           Welcome, {user?.name || "Admin"}! Manage all job postings below.
         </p>
-
         <button
-          className="btn btn-primary btn-sm"
+          className="btn btn-primary btn-sm sticky-top"
           onClick={() => setShowModal(true)}
         >
-          + Add Job
+          +Add Job
         </button>
+
+        {error && (
+          <div className="alert alert-danger mt-3" role="alert">
+            {error}
+          </div>
+        )}
       </div>
+
+      {/* Stats Section */}
+      {stats && (
+        <div className="bg-white rounded-3 shadow-sm p-3 mb-4 sticky-top" style={{ top: 70, zIndex: 999 }}>
+          <div className="d-flex flex-wrap justify-content-center gap-3">
+            {Object.entries(stats).map(([key, value]) => (
+              <div
+                key={key}
+                className="card text-center border-0 shadow-sm"
+                style={{
+                  width: "130px",
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: "10px",
+                }}
+              >
+                <div className="card-body p-2">
+                  <h6 className="text-capitalize text-muted mb-1">{key}</h6>
+                  <p className="fw-bold text-info fs-5 mb-0">{value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Job Cards */}
       <div className="row">
@@ -169,7 +225,6 @@ const AdminDashboard: React.FC = () => {
                     {job.company} — {job.location}
                   </h6>
 
-                  {/*  Display deadline */}
                   {job.deadline && (
                     <p className="text-danger small mb-1">
                       Deadline: {new Date(job.deadline).toLocaleDateString()}
@@ -189,7 +244,7 @@ const AdminDashboard: React.FC = () => {
                         setLocation(job.location);
                         setSalary(String(job.salary));
                         setDescription(job.description);
-                        setDeadline(job.deadline || ""); 
+                        setDeadline(job.deadline || "");
                         setShowModal(true);
                       }}
                     >
@@ -258,15 +313,12 @@ const AdminDashboard: React.FC = () => {
                     value={salary}
                     onChange={(e) => setSalary(e.target.value)}
                   />
-
-                  {/* New Deadline Field */}
                   <input
                     className="form-control"
                     type="date"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
                   />
-
                   <textarea
                     className="form-control"
                     rows={3}
