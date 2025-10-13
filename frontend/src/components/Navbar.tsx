@@ -86,17 +86,7 @@ const Navbar: React.FC = () => {
                         Manage Users
                       </NavLink>
                     </li>
-                    <li className="nav-item">
-                      <NavLink
-                        to="/admin/stats"
-                        className={({ isActive }) =>
-                          `nav-link ${isActive ? "fw-bold text-white" : ""}`
-                        }
-                      >
-                        Statistics
-                      </NavLink>
-                    </li>
-
+                    
                     {/*  New Monthly Report Link */}
                     <li className="nav-item">
                       <NavLink
