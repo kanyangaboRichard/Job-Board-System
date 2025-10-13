@@ -10,7 +10,7 @@ interface Job {
   description: string;
   company: string;
   salary: number;
-  deadline?: string; 
+  deadline?: string;
 }
 
 interface Stats {
@@ -118,9 +118,7 @@ const AdminDashboard: React.FC = () => {
       const savedJob = await res.json();
 
       if (editingJob) {
-        setJobs((prev) =>
-          prev.map((job) => (job.id === savedJob.id ? savedJob : job))
-        );
+        setJobs((prev) => prev.map((job) => (job.id === savedJob.id ? savedJob : job)));
       } else {
         setJobs((prev) => [savedJob, ...prev]);
       }
@@ -168,56 +166,57 @@ const AdminDashboard: React.FC = () => {
   if (loading) return <p className="p-4 text-muted">Loading jobs...</p>;
 
   return (
-    <div className="container mt-5">
-      {/* Heading */}
-      <div className="text-center mb-4 bg-white py-3 sticky-top" style={{ top: 0, zIndex: 1000 }}>
-        <h2 className="fw-bold text-primary">Admin Dashboard</h2>
-        <p className="text-muted">
+    <div className="container-fluid mt-3">
+      {/*Sticky Header Stack */}
+      <div
+        className="bg-white shadow-sm py-3 px-3 rounded-3 sticky-top"
+        style={{ top: "56px", zIndex: 1030 }}
+      >
+        <h2 className="fw-bold text-primary mb-1">Admin Dashboard</h2>
+        <p className="text-muted mb-2">
           Welcome, {user?.name || "Admin"}! Manage all job postings below.
         </p>
+
         <button
-          className="btn btn-primary btn-sm sticky-top"
+          className="btn btn-sm btn-primary mb-3"
           onClick={() => setShowModal(true)}
         >
-          +Add Job
+          + Add Job
         </button>
 
         {error && (
-          <div className="alert alert-danger mt-3" role="alert">
+          <div className="alert alert-danger py-1 small mb-2" role="alert">
             {error}
           </div>
         )}
-      </div>
 
-      {/* Stats Section */}
-      {stats && (
-        <div className="bg-white rounded-3 shadow-sm p-3 mb-4 sticky-top" style={{ top: 70, zIndex: 999 }}>
-          <div className="d-flex flex-wrap justify-content-center gap-3">
+        {stats && (
+          <div className="d-flex flex-wrap justify-content-center gap-3 mb-2 ">
             {Object.entries(stats).map(([key, value]) => (
               <div
                 key={key}
                 className="card text-center border-0 shadow-sm"
                 style={{
                   width: "130px",
-                  backgroundColor: "#f8f9fa",
+                  backgroundColor: "#f7eac2ff",
                   borderRadius: "10px",
                 }}
               >
                 <div className="card-body p-2">
                   <h6 className="text-capitalize text-muted mb-1">{key}</h6>
-                  <p className="fw-bold text-info fs-5 mb-0">{value}</p>
+                  <p className="fw-bold text-info fs-6 mb-0">{value}</p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Job Cards */}
-      <div className="row">
+      {/*   Job List */}
+      <div className="mt-4 row">
         {jobs.length > 0 ? (
           jobs.map((job) => (
-            <div key={job.id} className="col-md-6 col-lg-4 mb-4">
+            <div key={job.id} className="col-md-6 col-lg-4 mb-4 colorh-100">
               <div className="card shadow-sm h-100">
                 <div className="card-body d-flex flex-column">
                   <h5 className="card-title">{job.title}</h5>

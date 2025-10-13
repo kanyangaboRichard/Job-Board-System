@@ -2,6 +2,8 @@ import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
+
+// 📄 Pages
 import Dashboard from "../pages/Dashboard";
 import JobDetails from "../pages/JobDetails";
 import ApplyJob from "../pages/ApplyJob";
@@ -11,10 +13,13 @@ import AdminDashboard from "../pages/adminDashboard";
 import ApplicationPage from "../pages/ApplicationPage";
 import MyApplicationPage from "../pages/MyApplicationPage";
 import UserManagement from "../pages/UserManagement";
-import AdminStats from "../pages/AdminStats";  
+import AdminStats from "../pages/AdminStats";
+import AdminMonthlyReport from "../pages/AdminMonthlyReports";
 import MainLayout from "../layouts/mainLayout";
 
-//  Protected route (for normal users)
+
+// Protected Route (for normal logged-in users)
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
@@ -26,7 +31,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-//  Admin-only route
+
+//Admin-only Route
+
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, user } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
@@ -46,16 +53,18 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
+
 // Main Router
+
 const AppRouter: React.FC = () => (
   <Routes>
-    {/* Shared layout (includes Navbar) */}
+    {/* Shared layout (includes Navbar, Footer, etc.) */}
     <Route element={<MainLayout />}>
       {/*  Public routes */}
       <Route path="/" element={<Dashboard />} />
       <Route path="/jobs/:id" element={<JobDetails />} />
 
-      {/*  User-protected routes */}
+      {/* User-protected routes */}
       <Route
         path="/apply/:id"
         element={
@@ -73,7 +82,7 @@ const AppRouter: React.FC = () => (
         }
       />
 
-      {/*  Admin-only routes */}
+      {/*Admin-only routes */}
       <Route
         path="/admin"
         element={
@@ -106,13 +115,23 @@ const AppRouter: React.FC = () => (
           </AdminRoute>
         }
       />
+
+      {/*New Monthly Report Route */}
+      <Route
+        path="/admin/report"
+        element={
+          <AdminRoute>
+            <AdminMonthlyReport />
+          </AdminRoute>
+        }
+      />
     </Route>
 
-    {/*  Auth routes (no Navbar) */}
+    {/* Auth routes (no layout) */}
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
 
-    {/*  Fallback for invalid URLs */}
+    {/* Fallback route */}
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 );
