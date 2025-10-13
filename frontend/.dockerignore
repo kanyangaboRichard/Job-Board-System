@@ -1,0 +1,8 @@
+# Ignore node_modules
+node_modules
+dist
+# Ignore environment files
+.env
+.git
+Dockerfile
+docker-compose.yml
