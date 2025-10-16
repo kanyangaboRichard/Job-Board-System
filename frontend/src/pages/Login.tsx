@@ -14,13 +14,13 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { loading, user } = useSelector((state: RootState) => state.auth);
 
-  // ✅ Compute redirect safely
+  //  Compute redirect safely
   const redirect = useMemo(() => {
     const param = new URLSearchParams(location.search).get("redirect");
     return param && param !== "/login" ? param : "/";
   }, [location.search]);
 
-  // ✅ Handle login submission
+  //  Handle login submission
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -38,7 +38,7 @@ const Login: React.FC = () => {
     }
   };
 
-  // ✅ Handle Google OAuth redirect
+  //  Handle Google OAuth redirect
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const googleToken = params.get("token");
@@ -49,7 +49,7 @@ const Login: React.FC = () => {
     }
   }, [location.pathname, location.search, navigate]);
 
-  // ✅ Auto-redirect if already logged in
+  // Auto-redirect if already logged in
   useEffect(() => {
     if (user && location.pathname === "/login") {
       const target = user.role === "admin" ? "/admin" : redirect;
@@ -57,7 +57,7 @@ const Login: React.FC = () => {
     }
   }, [user, redirect, navigate, location.pathname]);
 
-  // ✅ Google login
+  // Google login
   const handleGoogleLogin = () => {
     window.location.href = `http://localhost:3005/api/auth/google?redirect=${encodeURIComponent(
       redirect
