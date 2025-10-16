@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import ApplicationCard from "../components/ApplicationCard";
 import {
   getApplications,
@@ -7,16 +7,31 @@ import {
 } from "../api/applications";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
+import Select from "react-select";
+
+type Option = {
+  value: number | string;
+  label: string;
+};
 
 const ApplicationPage: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
-  const [search, setSearch] = useState("");
+  const [selectedApplicant, setSelectedApplicant] = useState<Option | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  //  Get token from Redux (same as MyApplicationPage)
+  // Modal for full cover letter
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState<string>("");
+
+  // React-select control
+  const [inputValue, setInputValue] = useState<string>("");
+  const [displayedOptions, setDisplayedOptions] = useState<Option[]>([]);
+
+  // Get token from Redux
   const token = useSelector((state: RootState) => state.auth.token);
 
+  // ✅ Fetch applications on mount or when token changes
   useEffect(() => {
     if (!token) return;
 
@@ -35,7 +50,7 @@ const ApplicationPage: React.FC = () => {
     fetchApplications();
   }, [token]);
 
-  // Handle Accept/Reject actions
+  // ✅ Handle Accept/Reject actions
   const handleRespond = async (
     id: number | string,
     status: "accepted" | "rejected",
@@ -60,35 +75,77 @@ const ApplicationPage: React.FC = () => {
     }
   };
 
-  //  Filter applications by applicant name or email
-  const filteredApplications = applications.filter((app) =>
-    [app.applicantName, app.applicantEmail]
-      .join(" ")
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  // ✅ Memoize options to prevent infinite re-renders
+  const options: Option[] = useMemo(() => {
+    return applications
+      .map((app) => ({
+        value: app.id,
+        label: `${app.applicantName} — ${app.applicantEmail}`,
+      }))
+      .sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+      );
+  }, [applications]);
 
-  // Consistent loading & error handling
-  if (loading) {
-    return <p className="p-4 text-muted">Loading applications...</p>;
-  }
+  // ✅ Compute top 5 matches (runs only when options or input changes)
+  useEffect(() => {
+    const q = inputValue.trim().toLowerCase();
+    const matches = q
+      ? options.filter((o) => o.label.toLowerCase().includes(q))
+      : options;
+    setDisplayedOptions(matches.slice(0, 5));
+  }, [options, inputValue]);
 
-  if (error) {
-    return <p className="p-4 text-danger">{error}</p>;
-  }
+  // ✅ Filter applications by selected applicant
+  const filteredApplications = useMemo(() => {
+    const list = selectedApplicant
+      ? applications.filter((app) => app.id === selectedApplicant.value)
+      : applications;
+
+    return [...list].sort((a, b) =>
+      (a.applicantName ?? "").localeCompare(b.applicantName ?? "", undefined, {
+        sensitivity: "base",
+      })
+    );
+  }, [applications, selectedApplicant]);
+
+  // ✅ Modal handlers
+  const openModal = (fullText: string) => {
+    setModalContent(fullText);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setModalContent("");
+  };
+
+  // ✅ UI RENDER
+  if (loading) return <p className="p-4 text-muted">Loading applications...</p>;
+  if (error) return <p className="p-4 text-danger">{error}</p>;
 
   return (
     <div className="container py-4">
       <h1 className="mb-4">All Applications</h1>
 
-      {/*  Search bar */}
-      <div className="mb-4">
-        <input
-          type="text"
-          className="form-control"
+      {/* 🔍 react-select search (alphabetical) */}
+      <div className="mb-4" style={{ maxWidth: 500 }}>
+        <Select<Option, false>
+          options={displayedOptions}
+          value={selectedApplicant}
+          onChange={(opt) => {
+            setSelectedApplicant(opt);
+            setInputValue("");
+          }}
+          onInputChange={(val, actionMeta) => {
+            if (actionMeta.action === "input-change") {
+              setInputValue(val);
+            }
+          }}
+          inputValue={inputValue}
+          isClearable
           placeholder="Search by applicant name or email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          noOptionsMessage={() => "No matches"}
         />
       </div>
 
@@ -96,32 +153,94 @@ const ApplicationPage: React.FC = () => {
         <p className="text-muted">No applications found.</p>
       ) : (
         <div className="row">
-          {filteredApplications.map((app) => (
-            <div key={app.id} className="col-md-6 col-lg-4 mb-4">
-              <ApplicationCard
-                jobTitle={app.jobTitle}
-                applicantName={app.applicantName}
-                applicantEmail={app.applicantEmail}
-                coverLetter={app.coverLetter}
-                cvUrl={app.cvUrl}
-                status={app.status}
-                responseNote={app.responseNote}
-                isAdmin
-                onAccept={() =>
-                  handleRespond(
-                    app.id,
-                    "accepted",
-                    "Congratulations! You're shortlisted."
-                  )
-                }
-                // Pass the rejection reason dynamically from ApplicationCard
-                onReject={(reason) =>
-                  handleRespond(app.id, "rejected", reason)
-                }
-              />
-            </div>
-          ))}
+          {filteredApplications.map((app) => {
+            const isLong = (app.coverLetter ?? "").length > 120;
+            const truncated = isLong
+              ? (app.coverLetter ?? "").slice(0, 120) + "..."
+              : app.coverLetter ?? "";
+
+            const coverLetterNode = (
+              <>
+                <span>{truncated}</span>
+                {isLong && (
+                  <button
+                    type="button"
+                    onClick={() => openModal(app.coverLetter ?? "")}
+                    className="btn btn-link p-0 ms-2"
+                    style={{ color: "#0d6efd" }}
+                  >
+                    Read more
+                  </button>
+                )}
+              </>
+            );
+
+            return (
+              <div key={app.id} className="col-md-6 col-lg-4 mb-4">
+                <ApplicationCard
+                  jobTitle={app.jobTitle}
+                  applicantName={app.applicantName}
+                  applicantEmail={app.applicantEmail}
+                  coverLetter={coverLetterNode as unknown as string}
+                  cvUrl={app.cvUrl}
+                  status={app.status}
+                  responseNote={app.responseNote}
+                  isAdmin
+                  onAccept={() =>
+                    handleRespond(
+                      app.id,
+                      "accepted",
+                      "Congratulations! You're shortlisted."
+                    )
+                  }
+                  onReject={(reason) =>
+                    handleRespond(app.id, "rejected", reason)
+                  }
+                />
+              </div>
+            );
+          })}
         </div>
+      )}
+
+      {/* 🪟 Simple modal for full cover letter */}
+      {modalOpen && (
+        <>
+          <div
+            className="modal-backdrop fade show"
+            onClick={closeModal}
+            style={{ cursor: "pointer" }}
+          />
+          <div
+            className="modal d-block"
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            style={{ background: "transparent" }}
+          >
+            <div className="modal-dialog modal-dialog-centered" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Full Description</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    aria-label="Close"
+                    onClick={closeModal}
+                  />
+                </div>
+                <div className="modal-body">
+                  <p>{modalContent}</p>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-secondary" onClick={closeModal}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

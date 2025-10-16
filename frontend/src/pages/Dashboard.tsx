@@ -2,14 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
 import { Link, useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode"; // correct import
+import Select from "react-select";
+import {jwtDecode} from "jwt-decode"; // correct import
 
 interface Job {
   id: number;
   title: string;
   location: string;
   description: string;
-  deadline?: string; 
+  deadline?: string;
 }
 
 interface Application {
@@ -24,15 +25,34 @@ interface DecodedToken {
   exp?: number;
 }
 
+interface Option {
+  value: number;
+  label: string;
+}
+
 const Dashboard: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState("User");
+  const [options, setOptions] = useState<Option[]>([]); // for react-select
 
   const token = useSelector((state: RootState) => state.auth.token);
   const navigate = useNavigate();
+
+  // helper: produce top-5 alphabetical options, optionally filtered by query
+  const computeOptions = (query = ""): Option[] => {
+    const normalized = query.trim().toLowerCase();
+    const filtered = jobs
+      .filter((j) =>
+        normalized ? j.title.toLowerCase().includes(normalized) : true
+      )
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .slice(0, 5)
+      .map((j) => ({ value: j.id, label: j.title }));
+    return filtered;
+  };
 
   useEffect(() => {
     const storedToken = token || localStorage.getItem("token");
@@ -61,15 +81,21 @@ const Dashboard: React.FC = () => {
       try {
         const res = await fetch("http://localhost:3005/api/jobs");
         if (!res.ok) throw new Error("Failed to fetch jobs");
-        const data = await res.json();
+        const data: Job[] = await res.json();
         setJobs(data);
+        // set initial top-5 alphabetical options
+        const initial = [...data]
+          .sort((a, b) => a.title.localeCompare(b.title))
+          .slice(0, 5)
+          .map((j) => ({ value: j.id, label: j.title }));
+        setOptions(initial);
       } catch (err) {
         console.error("Error fetching jobs:", err);
         setError("Failed to load jobs. Please try again later.");
       }
     };
 
-    //  Fetch user applications
+    // Fetch user applications
     const fetchUserApplications = async () => {
       if (!storedToken) return;
       try {
@@ -95,36 +121,107 @@ const Dashboard: React.FC = () => {
     loadData();
   }, [token]);
 
+  // update options whenever jobs change (keeps top-5)
+  useEffect(() => {
+    setOptions(computeOptions());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobs]);
+
   if (loading) return <p className="p-4 text-muted">Loading jobs...</p>;
   if (error) return <p className="p-4 text-danger">{error}</p>;
 
   return (
     <div className="bg-light min-vh-100">
       <div className="container mt-5 py-5">
-        <div className="text-center mb-4">
-          <h2 className="fw-bold">Available Jobs</h2>
-          {token ? (
-            <p className="text-muted">
-              Welcome, <strong>{username}</strong>! Browse the latest job postings below.
-            </p>
-          ) : (
-            <p className="text-muted">
-              Browse the latest job postings below.{" "}
-              <Link to="/login">Log in</Link> to apply!
-            </p>
-          )}
+        {/* Sticky header: title (bold) + search (react-select) */}
+        <div
+          className=" bg-light py-3 mb-4"
+          style={{ zIndex: 1020 }}
+        >
+          <div className="text-center mb-2">
+            <h2 className="fw-bold m-0">Available Jobs</h2>
+            {token ? (
+              <p className="text-muted mb-0">
+                Welcome, <strong>{username}</strong>! Browse the latest job
+                postings below.
+              </p>
+            ) : (
+              <p className="text-muted mb-0">
+                Browse the latest job postings below.{" "}
+                <Link to="/login">Log in</Link> to apply!
+              </p>
+            )}
+          </div>
 
-          <img
-            src="assets/banner.jpeg"
-            className="img-fluid rounded mb-3"
-            alt="Career opportunities"
-          />
+          {/* react-select filster */}
+          <div className="d-flex justify-content-center mt-3 ">
+            <div style={{ minWidth: 280, maxWidth: 640, width: "100%" }}>
+              <Select
+                options={options}
+                placeholder="Search jobs..."
+                isClearable
+                onChange={(selected) => {
+                  if (selected) {
+                    navigate(`/jobs/${(selected as Option).value}`);
+                  }
+                }}
+                onInputChange={(inputValue, { action }) => {
+                  // update options to top-5 matching input
 
-          <p className="text-muted">
-            Find exciting opportunities to advance your career. Jobs are updated
-            regularly — check back often!
-          </p>
+                  if (action === "input-change" || action === "input-blur") {
+                    setOptions(computeOptions(inputValue));
+                  }
+                }}
+                // ensure menu shows when focused even without typing
+                menuPlacement="auto"
+                styles={{
+                  menu: (provided) => ({ ...provided, zIndex: 2000 }),
+                }}
+              />
+            </div>
+          </div>
         </div>
+
+        {/*Images section */}
+        <div className="d-flex flex-row flex-wrap justify-content-center align-items-center gap-3 mb-4">
+          <img
+            src="/assets/banner.jpeg"
+            alt="isco_banner"
+            className="img-fluid"
+            style={{ maxHeight: 200, maxWidth: 320 }}
+          />
+          <img
+            src="/assets/banner2.jpeg"
+            alt="customer_services 2"
+            className="img-fluid"
+            style={{ maxHeight: 200, maxWidth: 320 }}
+          />
+          <img
+            src="/job_search_illustration.png"
+            alt="Job Search Illustration 3"
+            className="img-fluid"
+            style={{ maxHeight: 200, maxWidth: 320 }}
+          />
+          <img
+            src="/job_search_illustration.png"
+            alt="Job Search Illustration 4"
+            className="img-fluid"
+            style={{ maxHeight: 200, maxWidth: 320 }}
+          />
+          <img
+            src="/job_search_illustration.png"
+            alt="Job Search Illustration 5"
+            className="img-fluid"
+            style={{ maxHeight: 200, maxWidth: 320 }}
+          />
+          <img
+            src="/job_search_illustration.png"
+            alt="Job Search Illustration 6"
+            className="img-fluid"
+            style={{ maxHeight: 200, maxWidth: 320 }}
+          />
+        </div>
+        
 
         <div className="row">
           {jobs.length > 0 ? (
@@ -159,7 +256,7 @@ const Dashboard: React.FC = () => {
                       )}
                       {/*  Description */}
                       <p className="card-text text-truncate">{job.description}</p>
-                      
+
                       {/*  Buttons */}
                       <div className="mt-auto d-flex justify-content-between">
                         <Link
@@ -175,9 +272,7 @@ const Dashboard: React.FC = () => {
                               !alreadyApplied && navigate(`/apply/${job.id}`)
                             }
                             className={`btn btn-sm ${
-                              alreadyApplied
-                                ? "btn-secondary disabled"
-                                : "btn-primary"
+                              alreadyApplied ? "btn-secondary disabled" : "btn-primary"
                             }`}
                             disabled={alreadyApplied}
                           >

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
 import axios from "axios";
+import Select from "react-select";
 
 interface Job {
   id: number;
@@ -22,6 +23,11 @@ interface Stats {
   rejected: number;
 }
 
+interface Option {
+  value: string;
+  label: string;
+}
+
 const AdminDashboard: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const token = useSelector((state: RootState) => state.auth.token);
@@ -29,7 +35,8 @@ const AdminDashboard: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  
+  const [, setError] = useState<string | null>(null);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -41,7 +48,14 @@ const AdminDashboard: React.FC = () => {
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [showModal, setShowModal] = useState(false);
 
+  //  Search & Pagination
+  const [selectedCompany, setSelectedCompany] = useState<Option | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 6;
+
+  
   // Fetch Jobs
+  
   useEffect(() => {
     if (!token) return;
 
@@ -64,7 +78,9 @@ const AdminDashboard: React.FC = () => {
     fetchJobs();
   }, [token]);
 
+
   // Fetch Stats
+
   useEffect(() => {
     if (!token) return;
 
@@ -82,7 +98,47 @@ const AdminDashboard: React.FC = () => {
     fetchStats();
   }, [token]);
 
-  // Save (Add or Edit)
+  
+  // Build company options
+  
+  const companyOptions: Option[] = useMemo(() => {
+    const uniqueCompanies = Array.from(new Set(jobs.map((j) => j.company)));
+    return uniqueCompanies.map((comp) => ({
+      value: comp,
+      label: comp,
+    }));
+  }, [jobs]);
+
+  
+  // Filter jobs by company
+  
+  const filteredJobs = useMemo(() => {
+    if (!selectedCompany) return jobs;
+    return jobs.filter((job) => job.company === selectedCompany.value);
+  }, [jobs, selectedCompany]);
+
+  
+  // Pagination logic
+  
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+  const startIndex = (currentPage - 1) * jobsPerPage;
+  const paginatedJobs = filteredJobs.slice(startIndex, startIndex + jobsPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage((p) => p + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage((p) => p - 1);
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCompany]);
+
+
+  // Save (Add/Edit Job)
+  
   const handleSave = async () => {
     const salaryNum = Number(salary) || 0;
 
@@ -116,9 +172,10 @@ const AdminDashboard: React.FC = () => {
       if (!res.ok) throw new Error("Failed to save job");
 
       const savedJob = await res.json();
-
       if (editingJob) {
-        setJobs((prev) => prev.map((job) => (job.id === savedJob.id ? savedJob : job)));
+        setJobs((prev) =>
+          prev.map((job) => (job.id === savedJob.id ? savedJob : job))
+        );
       } else {
         setJobs((prev) => [savedJob, ...prev]);
       }
@@ -130,7 +187,9 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  
   // Delete Job
+
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
 
@@ -160,63 +219,72 @@ const AdminDashboard: React.FC = () => {
     setError(null);
   };
 
+  
+  // Render
+  
   if (!token) return <p className="p-4 text-muted">Please log in as an admin.</p>;
   if (user?.role !== "admin")
     return <p className="p-4 text-danger">Access denied.</p>;
   if (loading) return <p className="p-4 text-muted">Loading jobs...</p>;
 
   return (
-    <div className="container-fluid mt-3">
-      {/*Sticky Header Stack */}
-      <div
-        className="bg-white shadow-sm py-3 px-3 rounded-3 sticky-top"
-        style={{ top: "56px", zIndex: 1030 }}
-      >
-        <h2 className="fw-bold text-primary mb-1">Admin Dashboard</h2>
-        <p className="text-muted mb-2">
-          Welcome, {user?.name || "Admin"}! Manage all job postings below.
-        </p>
+    <div className="container mt-5">
+      {/* Header */}
+      <div className="d-flex justify-content-between align-items-center flex-wrap mb-4">
+        <div>
+          <h2 className="fw-bold text-primary">Admin Dashboard</h2>
+          <p className="text-muted mb-2">
+            Welcome, {user?.name || "Admin"}! Manage all job postings below.
+          </p>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => setShowModal(true)}
+          >
+            + Add Job
+          </button>
+        </div>
 
-        <button
-          className="btn btn-sm btn-primary mb-3"
-          onClick={() => setShowModal(true)}
-        >
-          + Add Job
-        </button>
+        {/* React-select company filter */}
+        <div style={{ minWidth: 250 }}>
+          <Select
+            options={companyOptions}
+            value={selectedCompany}
+            onChange={(opt) => setSelectedCompany(opt)}
+            isClearable
+            placeholder="Filter by company..."
+          />
+        </div>
+      </div>
 
-        {error && (
-          <div className="alert alert-danger py-1 small mb-2" role="alert">
-            {error}
-          </div>
-        )}
-
-        {stats && (
-          <div className="d-flex flex-wrap justify-content-center gap-3 mb-2 ">
+      {/* Stats */}
+      {stats && (
+        <div className="bg-white rounded-3 shadow-sm p-3 mb-4">
+          <div className="d-flex flex-wrap justify-content-center gap-3">
             {Object.entries(stats).map(([key, value]) => (
               <div
                 key={key}
                 className="card text-center border-0 shadow-sm"
                 style={{
                   width: "130px",
-                  backgroundColor: "#f7eac2ff",
+                  backgroundColor: "#f8f9fa",
                   borderRadius: "10px",
                 }}
               >
                 <div className="card-body p-2">
                   <h6 className="text-capitalize text-muted mb-1">{key}</h6>
-                  <p className="fw-bold text-info fs-6 mb-0">{value}</p>
+                  <p className="fw-bold text-info fs-5 mb-0">{value}</p>
                 </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/*   Job List */}
-      <div className="mt-4 row">
-        {jobs.length > 0 ? (
-          jobs.map((job) => (
-            <div key={job.id} className="col-md-6 col-lg-4 mb-4 colorh-100">
+      {/* Job Cards */}
+      <div className="row">
+        {paginatedJobs.length > 0 ? (
+          paginatedJobs.map((job) => (
+            <div key={job.id} className="col-md-6 col-lg-4 mb-4">
               <div className="card shadow-sm h-100">
                 <div className="card-body d-flex flex-column">
                   <h5 className="card-title">{job.title}</h5>
@@ -262,10 +330,35 @@ const AdminDashboard: React.FC = () => {
           ))
         ) : (
           <div className="col-12 text-center">
-            <p className="text-muted">No job postings available.</p>
+            <p className="text-muted">No job postings found.</p>
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="d-flex justify-content-center align-items-center mt-4 gap-3">
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            disabled={currentPage === 1}
+            onClick={handlePrevPage}
+          >
+            Previous
+          </button>
+
+          <span className="fw-semibold">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            disabled={currentPage === totalPages}
+            onClick={handleNextPage}
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (
