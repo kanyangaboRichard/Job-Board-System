@@ -4,20 +4,20 @@ import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 
-/**
- * Apply for a job (using CV link instead of file upload)
- */
+
+ //Apply for a job (using CV link instead of file upload)
+ 
 router.post(
   "/:jobId/apply",
   requireAuth,
   applicationController.applyForJob
 );
 
-/**
- * Get all applications
- * - Admin → all applications
- * - User → only their applications
- */
+
+ //Get all applications
+  //Admin → all applications
+ // - User → only their applications
+ 
 router.get("/", requireAuth, async (req: any, res, next) => {
   try {
     if (req.user.role === "admin") {
@@ -33,14 +33,14 @@ router.get("/", requireAuth, async (req: any, res, next) => {
   }
 });
 
-/**
- * Get current user's applications (explicit route)
- */
+
+ //Get current user's applications (explicit route)
+ 
 router.get("/user", requireAuth, applicationController.getUserApplications);
 
-/**
- * Admin: Get applications for a specific job
- */
+
+  //Admin: Get applications for a specific job
+ 
 router.get("/:jobId", requireAuth, async (req: any, res, next) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Forbidden: Admins only" });
@@ -48,9 +48,8 @@ router.get("/:jobId", requireAuth, async (req: any, res, next) => {
   return applicationController.getApplicationsByJob(req, res, next);
 });
 
-/**
- * Admin: Update application status (accept/reject/pending)
- */
+//Admin: Update application status (accept/reject/pending)
+
 router.patch("/:id", requireAuth, async (req: any, res, next) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Forbidden: Admins only" });

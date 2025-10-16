@@ -14,7 +14,7 @@ import ApplicationPage from "../pages/ApplicationPage";
 import MyApplicationPage from "../pages/MyApplicationPage";
 import UserManagement from "../pages/UserManagement";
 import AdminStats from "../pages/AdminStats";
-import AdminMonthlyReport from "../pages/AdminMonthlyReports";
+import AdminMonthlyReport from "../pages/AdminReports";
 import MainLayout from "../layouts/mainLayout";
 
 

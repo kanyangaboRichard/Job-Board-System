@@ -5,7 +5,8 @@ import { checkAdmin } from "../middleware/checkAdmin";
 
 const router = Router();
 
- //Admin Report — Detailed Applications Table
+
+   //Admin Report — Detailed Applications Table
   //GET /api/admin/monthly-report-range?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&company=CompanyName
  
 router.get(
@@ -16,7 +17,7 @@ router.get(
     try {
       const { startDate, endDate, company } = req.query;
 
-      // Default range = current month
+      //  Default range = current month
       const start = startDate
         ? new Date(startDate as string)
         : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -50,7 +51,7 @@ router.get(
         ${companyFilter}
       `;
 
-      //  Detailed Applications Data
+      // Detailed Applications Data
       const detailedApplicationsQuery = `
         SELECT 
           j.company,
@@ -75,9 +76,7 @@ router.get(
 
       //  Construct report object
       const report = {
-        period: `${start.toISOString().split("T")[0]} → ${end
-          .toISOString()
-          .split("T")[0]}`,
+        period: `${start.toISOString().split("T")[0]} → ${end.toISOString().split("T")[0]}`,
         totalJobs: Number(jobsRes.rows[0]?.count || 0),
         totalApplications: Number(appsRes.rows[0]?.total_applications || 0),
         accepted: Number(appsRes.rows[0]?.accepted || 0),
@@ -97,32 +96,23 @@ router.get(
   }
 );
 
- //Get companies dynamically (supports ?search= & ?limit=)
-  //GET /api/admin/companies?search=google&limit=5
+  //Get all distinct companies for the Admin dropdown filter
+  //GET /api/admin/companies
  
 router.get(
   "/companies",
   passport.authenticate("jwt", { session: false }),
   checkAdmin,
-  async (req: Request, res: Response) => {
+  async (_req: Request, res: Response) => {
     try {
-      const search = (req.query.search as string) || "";
-      const limit = Math.min(Number(req.query.limit) || 5, 50); // safety cap (max 50)
-
-      const result = await pool.query(
-        `
-        SELECT DISTINCT company
-        FROM jobs
-        WHERE company IS NOT NULL
-          AND company ILIKE $1
+      const result = await pool.query(`
+        SELECT DISTINCT company 
+        FROM jobs 
+        WHERE company IS NOT NULL 
         ORDER BY company ASC
-        LIMIT $2
-        `,
-        [`%${search.trim()}%`, limit]
-      );
-
+      `);
       const companies = result.rows.map((r) => r.company);
-      res.json(companies);
+      res.json({ companies });
     } catch (err) {
       console.error("Error fetching companies:", err);
       res.status(500).json({ message: "Error fetching companies" });

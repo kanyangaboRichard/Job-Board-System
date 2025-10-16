@@ -95,7 +95,7 @@ const Navbar: React.FC = () => {
                           `nav-link ${isActive ? "fw-bold text-white" : ""}`
                         }
                       >
-                        Monthly Report
+                        Reports
                       </NavLink>
                     </li>
                   </>

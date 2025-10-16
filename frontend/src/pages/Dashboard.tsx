@@ -9,7 +9,7 @@ interface Job {
   title: string;
   location: string;
   description: string;
-  deadline?: string; // ✅ new field
+  deadline?: string; 
 }
 
 interface Application {
@@ -37,7 +37,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const storedToken = token || localStorage.getItem("token");
 
-    // ✅ Decode JWT to show user's name
+    // Decode JWT to show user's name
     if (storedToken) {
       try {
         const decoded = jwtDecode<DecodedToken>(storedToken);
@@ -56,7 +56,7 @@ const Dashboard: React.FC = () => {
       }
     }
 
-    // ✅ Fetch all jobs
+    // Fetch all jobs
     const fetchJobs = async () => {
       try {
         const res = await fetch("http://localhost:3005/api/jobs");
@@ -69,7 +69,7 @@ const Dashboard: React.FC = () => {
       }
     };
 
-    // ✅ Fetch user applications
+    //  Fetch user applications
     const fetchUserApplications = async () => {
       if (!storedToken) return;
       try {
@@ -160,9 +160,6 @@ const Dashboard: React.FC = () => {
                       {/*  Description */}
                       <p className="card-text text-truncate">{job.description}</p>
                       
-                      
-
-                      {/*  Description (truncated) */}
                       {/*  Buttons */}
                       <div className="mt-auto d-flex justify-content-between">
                         <Link

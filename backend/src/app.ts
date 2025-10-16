@@ -8,7 +8,7 @@ import jobRoutes from "./routes/jobRoutes";
 import applicationRoutes from "./routes/applicationRoutes";
 import userRouter from "./routes/userRouter";
 import adminRoutes from "./routes/adminRoutes";
-import adminMonthlyReport from "./routes/adminMonthlyReport";
+import adminMonthlyReport from "./routes/adminReport";
 
 const app = express();
 

@@ -40,9 +40,9 @@ export const registerUser = async (
   return { token, user };
 };
 
-// -------------------
+
 // Service: Login User
-// -------------------
+
 export const loginUser = async (email: string, password: string) => {
   // Find user
   const result = await pool.query("SELECT * FROM users WHERE email=$1", [email]);

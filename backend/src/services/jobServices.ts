@@ -1,10 +1,10 @@
 import pool from "../config/db";
 
-// -------------------
+
 // Get Jobs (with filters)
-// -------------------
+
 export const getJobsService = async (title?: string, location?: string) => {
-  // ✅ Select deadline explicitly
+  // Select deadline explicitly
   let query = `
     SELECT id, title, company, location, description, posted_by, deadline
     FROM jobs
@@ -27,9 +27,9 @@ export const getJobsService = async (title?: string, location?: string) => {
   return result.rows;
 };
 
-// -------------------
+
 // Get Job by ID
-// -------------------
+
 export const getJobByIdService = async (id: string) => {
   const result = await pool.query(
     `SELECT id, title, company, location, description, posted_by, deadline
@@ -45,9 +45,9 @@ export const getJobByIdService = async (id: string) => {
   return result.rows[0];
 };
 
-// -------------------
+
 // Create Job
-// -------------------
+
 export const createJobService = async (
   title: string,
   company: string,
@@ -96,9 +96,9 @@ export const updateJobService = async (
   return result.rows[0];
 };
 
-// -------------------
+
 // Delete Job
-// -------------------
+
 export const deleteJobService = async (id: string) => {
   const result = await pool.query(
     "DELETE FROM jobs WHERE id = $1 RETURNING id, title, company, location, description, posted_by, deadline",

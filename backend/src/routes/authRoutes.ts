@@ -7,9 +7,9 @@ import pool from "../config/db";
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
-// -------------------
+
 // Local Register
-// -------------------
+
 router.post("/register", async (req, res) => {
   try {
     const { email, password, name, role } = req.body;
@@ -42,9 +42,9 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// -------------------
+
 // Local Login (Fixed)
-// -------------------
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -83,9 +83,8 @@ router.post("/login", async (req, res) => {
 
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
-// -------------------
 // Google OAuth callback
-// -------------------
+
 router.get(
   "/google/callback",
   passport.authenticate("google", {
