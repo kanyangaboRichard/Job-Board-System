@@ -209,46 +209,49 @@ const AdminReport: React.FC = () => {
             onChange={(e) => setEndDate(e.target.value)}
           />
 
-          {/* Async Company Dropdown */}
-          <div style={{ width: "250px" }}>
+            {/* Async Company Dropdown */}
+            <div style={{ width: "250px" }}>
             <AsyncSelect<SelectOption, false, GroupBase<SelectOption>>
               cacheOptions
-              defaultOptions={[{ value: "", label: "All Companies" }]}
-              loadOptions={loadCompanyOptions}
+              defaultOptions={true} // load top 5 when menu opens
+              loadOptions={async (inputValue: string) => {
+              const opts = await loadCompanyOptions(inputValue);
+              
+              // ensure unique and sorted ascending by label
+              const unique = Array.from(new Map(opts.map((o) => [o.value, o])).values());
+              unique.sort((a, b) => a.label.localeCompare(b.label));
+              return unique;
+              }}
               isClearable
               isSearchable
-              value={
-                company
-                  ? { value: company, label: company }
-                  : { value: "", label: "All Companies" }
-              }
+              value={company ? { value: company, label: company } : null}
               onChange={(selected) => setCompany(selected ? selected.value : "")}
               placeholder="Search or select a company..."
               styles={{
-                control: (base: CSSObjectWithLabel): CSSObjectWithLabel => ({
-                  ...base,
-                  minHeight: "32px",
-                  fontSize: "0.9rem",
-                  borderColor: "#ced4da",
-                  boxShadow: "none",
-                  "&:hover": { borderColor: "#86b7fe" },
-                }),
-                option: (
-                  base: CSSObjectWithLabel,
-                  state: OptionProps<SelectOption, false, GroupBase<SelectOption>>
-                ): CSSObjectWithLabel => ({
-                  ...base,
-                  fontSize: "0.9rem",
-                  backgroundColor: state.isSelected
-                    ? "#0d6efd"
-                    : state.isFocused
-                    ? "#e9ecef"
-                    : "white",
-                  color: state.isSelected ? "white" : "black",
-                }),
+              control: (base: CSSObjectWithLabel): CSSObjectWithLabel => ({
+                ...base,
+                minHeight: "32px",
+                fontSize: "0.9rem",
+                borderColor: "#ced4da",
+                boxShadow: "none",
+                "&:hover": { borderColor: "#86b7fe" },
+              }),
+              option: (
+                base: CSSObjectWithLabel,
+                state: OptionProps<SelectOption, false, GroupBase<SelectOption>>
+              ): CSSObjectWithLabel => ({
+                ...base,
+                fontSize: "0.9rem",
+                backgroundColor: state.isSelected
+                ? "#0d6efd"
+                : state.isFocused
+                ? "#e9ecef"
+                : "white",
+                color: state.isSelected ? "white" : "black",
+              }),
               }}
             />
-          </div>
+            </div>
 
           <button className="btn btn-sm btn-primary" onClick={fetchReport}>
             Refresh
