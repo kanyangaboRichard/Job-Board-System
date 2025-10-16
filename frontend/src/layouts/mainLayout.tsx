@@ -31,7 +31,6 @@ const MainLayout: React.FC = () => {
       const decoded = jwtDecode<DecodedToken>(token);
       localStorage.setItem("token", token);
 
-      //  Prevent overwriting an already-logged-in user
       const existingUser = store.getState().auth.user;
       if (!existingUser || !existingUser.id) {
         dispatch({
@@ -48,20 +47,17 @@ const MainLayout: React.FC = () => {
         });
       }
 
-      // Redirect ONLY if this is a Google OAuth callback (?token)
+      // Redirect ONLY if OAuth callback (?token)
       if (params.get("token")) {
-        if (decoded.role === "admin") {
-          navigate("/admin", { replace: true });
-        } else {
-          navigate("/", { replace: true });
-        }
+        navigate(decoded.role === "admin" ? "/admin" : "/", { replace: true });
       }
     } catch (err) {
       console.error("Invalid token:", err);
       localStorage.removeItem("token");
       if (location.pathname !== "/login") navigate("/login", { replace: true });
     }
-  }, [dispatch, navigate, location.pathname, location.search]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, navigate]); // only run once, not on every route change
 
   return (
     <div className="container-fluid">

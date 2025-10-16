@@ -45,6 +45,7 @@ const Navbar: React.FC = () => {
                 <li className="nav-item me-2">
                   <NavLink
                     to="/"
+                    end
                     className={({ isActive }) =>
                       `nav-link ${isActive ? "fw-bold text-white" : ""}`
                     }
@@ -59,6 +60,7 @@ const Navbar: React.FC = () => {
                     <li className="nav-item">
                       <NavLink
                         to="/admin"
+                        end // ✅ ensures it’s only active on /admin
                         className={({ isActive }) =>
                           `nav-link ${isActive ? "fw-bold text-white" : ""}`
                         }
@@ -86,8 +88,6 @@ const Navbar: React.FC = () => {
                         Manage Users
                       </NavLink>
                     </li>
-                    
-                    {/*  New Monthly Report Link */}
                     <li className="nav-item">
                       <NavLink
                         to="/admin/report"

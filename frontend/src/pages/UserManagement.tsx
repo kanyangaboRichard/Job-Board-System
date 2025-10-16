@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
 
@@ -16,8 +16,13 @@ const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
-  // Build headers safely
+  // 🧭 Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 6; // change this to 10 if you prefer
+
+  // ✅ Build headers safely
   const getAuthHeaders = () => {
     const savedToken = token || localStorage.getItem("token");
     return {
@@ -26,7 +31,7 @@ const UserManagement: React.FC = () => {
     };
   };
 
-  // Fetch all users (Admin only)
+  // ✅ Fetch all users (Admin only)
   useEffect(() => {
     if (!user || user.role !== "admin") return;
     if (!token && !localStorage.getItem("token")) return;
@@ -39,10 +44,7 @@ const UserManagement: React.FC = () => {
           headers: getAuthHeaders(),
         });
 
-        if (!res.ok) {
-          throw new Error(`Failed to fetch users: ${res.status}`);
-        }
-
+        if (!res.ok) throw new Error(`Failed to fetch users: ${res.status}`);
         const data = await res.json();
         setUsers(data);
       } catch (err) {
@@ -54,9 +56,44 @@ const UserManagement: React.FC = () => {
     };
 
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token]);
 
-  //  Promote a user to admin
+  // 🔍 Filter users by search
+  const filteredUsers = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return users;
+    return users.filter(
+      (u) =>
+        u.email.toLowerCase().includes(query) ||
+        (u.name && u.name.toLowerCase().includes(query)) ||
+        u.role.toLowerCase().includes(query)
+    );
+  }, [users, search]);
+
+  // 📄 Paginate filtered users
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const startIndex = (currentPage - 1) * usersPerPage;
+  const paginatedUsers = filteredUsers.slice(
+    startIndex,
+    startIndex + usersPerPage
+  );
+
+  // 🧩 Pagination handlers
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage((p) => p + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage((p) => p - 1);
+  };
+
+  // When search changes, reset to page 1
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  // 🛠 Promote a user to admin
   const handleMakeAdmin = async (id: number | string) => {
     try {
       const res = await fetch(`http://localhost:3005/api/users/${id}/make-admin`, {
@@ -64,11 +101,9 @@ const UserManagement: React.FC = () => {
         headers: getAuthHeaders(),
       });
 
-      if (!res.ok) {
-        throw new Error(`Failed to promote user: ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`Failed to promote user: ${res.status}`);
       const updated = await res.json();
+
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, role: updated.role } : u))
       );
@@ -77,10 +112,10 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  // Revoke admin rights (prevent self-revoke)
+  // 🛠 Revoke admin rights (prevent self-revoke)
   const handleRevokeAdmin = async (id: number | string) => {
     if (String(user?.id) === String(id)) {
-      alert(" You cannot revoke your own admin privileges.");
+      alert("You cannot revoke your own admin privileges.");
       return;
     }
 
@@ -90,11 +125,9 @@ const UserManagement: React.FC = () => {
         headers: getAuthHeaders(),
       });
 
-      if (!res.ok) {
-        throw new Error(`Failed to revoke admin: ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`Failed to revoke admin: ${res.status}`);
       const updated = await res.json();
+
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, role: updated.role } : u))
       );
@@ -103,28 +136,42 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  //  Access Control
+  // 🚫 Access Control
   if (user?.role !== "admin") {
     return <p className="p-6 text-danger">Access denied — Admins only</p>;
   }
 
-  if (loading) {
-    return <p className="p-6 text-muted">Loading users...</p>;
-  }
-
-  if (error) {
-    return <p className="p-6 text-danger">{error}</p>;
-  }
+  if (loading) return <p className="p-6 text-muted">Loading users...</p>;
+  if (error) return <p className="p-6 text-danger">{error}</p>;
 
   return (
     <div className="container mt-4">
-      <h2>Manage Users</h2>
+      {/* Fixed header under navbar */}
+      <div
+        className="bg-white py-3 px-3 mb-3 border-bottom shadow-sm position-sticky top-0"
+        style={{ zIndex: 1030 }}
+      >
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h2 className="mb-0">Manage Users</h2>
 
-      {users.length === 0 ? (
+          {/* Search bar */}
+          <input
+            type="text"
+            className="form-control"
+            style={{ maxWidth: 350 }}
+            placeholder="Search by email, name, or role..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* List */}
+      {paginatedUsers.length === 0 ? (
         <p className="mt-3 text-muted">No users found.</p>
       ) : (
         <ul className="list-group mt-3">
-          {users.map((u) => {
+          {paginatedUsers.map((u) => {
             const isCurrentAdmin = String(u.id) === String(user?.id);
             return (
               <li
@@ -149,7 +196,9 @@ const UserManagement: React.FC = () => {
                   ) : (
                     <button
                       className={`btn btn-sm ${
-                        isCurrentAdmin ? "btn-secondary disabled" : "btn-outline-danger"
+                        isCurrentAdmin
+                          ? "btn-secondary disabled"
+                          : "btn-outline-danger"
                       }`}
                       onClick={() => !isCurrentAdmin && handleRevokeAdmin(u.id)}
                       disabled={isCurrentAdmin}
@@ -162,6 +211,31 @@ const UserManagement: React.FC = () => {
             );
           })}
         </ul>
+      )}
+
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="d-flex justify-content-center align-items-center mt-4 gap-3">
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            disabled={currentPage === 1}
+            onClick={handlePrevPage}
+          >
+            Previous
+          </button>
+
+          <span className="fw-semibold">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            disabled={currentPage === totalPages}
+            onClick={handleNextPage}
+          >
+            Next
+          </button>
+        </div>
       )}
     </div>
   );
