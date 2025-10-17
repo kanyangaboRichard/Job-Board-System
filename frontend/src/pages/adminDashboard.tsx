@@ -258,7 +258,7 @@ const AdminDashboard: React.FC = () => {
 
       {/* Stats */}
       {stats && (
-        <div className="bg-white rounded-3 shadow-sm p-3 mb-4">
+        <div className="bg-info rounded-3 shadow-sm p-3 mb-4">
           <div className="d-flex flex-wrap justify-content-center gap-3">
             {Object.entries(stats).map(([key, value]) => (
               <div
