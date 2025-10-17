@@ -4,20 +4,20 @@
 }
 
 .animated-bg {
-  background: linear-gradient(270deg, #e0f7fa, #e3f2fd, #fff3e0);
+  background: linear-gradient(270deg, #e0f7fa, #e3f2fd, #b7afb7);
   background-size: 200% 200%;
   animation: moveBg 15s linear infinite;
 }
 
 .gradient-text {
-  background: linear-gradient(to right, #007bff, #ff9800);
+  background: linear-gradient(to right, #007bff, #231e22);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 .gradient-text-alt {
-  background: linear-gradient(to right, #ff5722, #4caf50);
+  background: linear-gradient(to right, #463642, #4caf50);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-} -webkit-text-fill-color: transparent;
+    }
 }
