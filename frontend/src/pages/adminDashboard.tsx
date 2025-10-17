@@ -35,8 +35,7 @@ const AdminDashboard: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  const [, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -48,25 +47,29 @@ const AdminDashboard: React.FC = () => {
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  //  Search & Pagination
+  // Search & Pagination
   const [selectedCompany, setSelectedCompany] = useState<Option | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 6;
 
-  
-  // Fetch Jobs
-  
+  //  Fetch Jobs
   useEffect(() => {
     if (!token) return;
-
     const fetchJobs = async () => {
       try {
         const res = await fetch("http://localhost:3005/api/jobs", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch jobs");
-        const data = await res.json();
-        setJobs(data);
+        const data: Job[] = await res.json();
+
+        // Ensure salary is numeric for display
+        const sanitizedJobs = data.map((j) => ({
+          ...j,
+          salary: Number(j.salary) || 0,
+        }));
+
+        setJobs(sanitizedJobs);
       } catch (err) {
         console.error("Error fetching jobs:", err);
         setError("Failed to load jobs.");
@@ -74,76 +77,75 @@ const AdminDashboard: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchJobs();
   }, [token]);
 
-
-  // Fetch Stats
-
+  //  Fetch Stats
   useEffect(() => {
     if (!token) return;
-
     const fetchStats = async () => {
       try {
-        const res = await axios.get<Stats>("http://localhost:3005/api/admin/stats", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get<Stats>(
+          "http://localhost:3005/api/admin/stats",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setStats(res.data);
       } catch (err) {
         console.error("Error fetching stats:", err);
       }
     };
-
     fetchStats();
   }, [token]);
 
-  
-  // Build company options
-  
+  // Company filter options
   const companyOptions: Option[] = useMemo(() => {
     const uniqueCompanies = Array.from(new Set(jobs.map((j) => j.company)));
-    return uniqueCompanies.map((comp) => ({
-      value: comp,
-      label: comp,
-    }));
+    return uniqueCompanies.map((comp) => ({ value: comp, label: comp }));
   }, [jobs]);
 
-  
   // Filter jobs by company
-  
   const filteredJobs = useMemo(() => {
     if (!selectedCompany) return jobs;
     return jobs.filter((job) => job.company === selectedCompany.value);
   }, [jobs, selectedCompany]);
 
-  
-  // Pagination logic
-  
+  // Pagination
   const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
   const startIndex = (currentPage - 1) * jobsPerPage;
-  const paginatedJobs = filteredJobs.slice(startIndex, startIndex + jobsPerPage);
+  const paginatedJobs = filteredJobs.slice(
+    startIndex,
+    startIndex + jobsPerPage
+  );
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage((p) => p + 1);
   };
-
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage((p) => p - 1);
   };
-
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCompany]);
 
-
   // Save (Add/Edit Job)
-  
   const handleSave = async () => {
-    const salaryNum = Number(salary) || 0;
+    const salaryNum = Number(salary);
 
-    if (!title || !company || !location || !description || !deadline) {
+    if (
+      !title.trim() ||
+      !company.trim() ||
+      !location.trim() ||
+      !description.trim() ||
+      !deadline.trim()
+    ) {
       setError("Please fill in all fields, including deadline.");
+      return;
+    }
+
+    if (isNaN(salaryNum) || salaryNum <= 0) {
+      setError("Please enter a valid salary greater than 0.");
       return;
     }
 
@@ -153,32 +155,32 @@ const AdminDashboard: React.FC = () => {
         ? `http://localhost:3005/api/jobs/${editingJob.id}`
         : "http://localhost:3005/api/jobs";
 
+      const body = JSON.stringify({
+        title,
+        company,
+        location,
+        description,
+        salary: salaryNum,
+        deadline,
+      });
+
       const res = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          title,
-          company,
-          location,
-          description,
-          salary: salaryNum,
-          deadline,
-        }),
+        body,
       });
 
       if (!res.ok) throw new Error("Failed to save job");
+      const savedJob: Job = await res.json();
 
-      const savedJob = await res.json();
-      if (editingJob) {
-        setJobs((prev) =>
-          prev.map((job) => (job.id === savedJob.id ? savedJob : job))
-        );
-      } else {
-        setJobs((prev) => [savedJob, ...prev]);
-      }
+      setJobs((prev) =>
+        editingJob
+          ? prev.map((job) => (job.id === savedJob.id ? savedJob : job))
+          : [savedJob, ...prev]
+      );
 
       resetForm();
     } catch (err) {
@@ -187,9 +189,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  
   // Delete Job
-
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
 
@@ -199,7 +199,6 @@ const AdminDashboard: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to delete job");
-
       setJobs((prev) => prev.filter((job) => job.id !== id));
     } catch (err) {
       console.error("Error deleting job:", err);
@@ -219,9 +218,7 @@ const AdminDashboard: React.FC = () => {
     setError(null);
   };
 
-  
   // Render
-  
   if (!token) return <p className="p-4 text-muted">Please log in as an admin.</p>;
   if (user?.role !== "admin")
     return <p className="p-4 text-danger">Access denied.</p>;
@@ -299,7 +296,12 @@ const AdminDashboard: React.FC = () => {
                   )}
 
                   <p className="card-text text-truncate">{job.description}</p>
-                  <p className="fw-semibold mt-2">Salary: {job.salary} RWF</p>
+                  <p className="fw-semibold mt-2">
+                     Salary:{" "}
+                    {job.salary > 0
+                      ? `${job.salary.toLocaleString()} RWF`
+                      : "Not specified"}
+                  </p>
 
                   <div className="mt-auto d-flex justify-content-between">
                     <button
@@ -345,11 +347,9 @@ const AdminDashboard: React.FC = () => {
           >
             Previous
           </button>
-
           <span className="fw-semibold">
             Page {currentPage} of {totalPages}
           </span>
-
           <button
             className="btn btn-outline-secondary btn-sm"
             disabled={currentPage === totalPages}
@@ -379,6 +379,9 @@ const AdminDashboard: React.FC = () => {
                 ></button>
               </div>
               <div className="modal-body">
+                {error && (
+                  <div className="alert alert-danger py-2">{error}</div>
+                )}
                 <form className="vstack gap-3">
                   <input
                     className="form-control"
@@ -400,7 +403,7 @@ const AdminDashboard: React.FC = () => {
                   />
                   <input
                     className="form-control"
-                    placeholder="Salary"
+                    placeholder="Salary (RWF)"
                     type="number"
                     value={salary}
                     onChange={(e) => setSalary(e.target.value)}

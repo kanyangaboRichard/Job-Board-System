@@ -107,7 +107,7 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const search = (req.query.search as string) || "";
-      const limit = Math.min(Number(req.query.limit) || 5, 50); // safety cap (max 50)
+      const limit = Math.min(Number(req.query.limit) || 5, 10); // Max 10
 
       const result = await pool.query(
         `
