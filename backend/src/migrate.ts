@@ -17,7 +17,7 @@ async function runMigrations() {
   const client = await pool.connect();
 
   try {
-    console.log("🔄 Running migrations...");
+    console.log("Running migrations...");
 
     // 1. Ensure migrations table exists
     await client.query(`

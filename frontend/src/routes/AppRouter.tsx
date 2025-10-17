@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
 
-// 📄 Pages
+//  Pages
 import Dashboard from "../pages/Dashboard";
 import JobDetails from "../pages/JobDetails";
 import ApplyJob from "../pages/ApplyJob";

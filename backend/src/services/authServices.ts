@@ -66,9 +66,9 @@ export const loginUser = async (email: string, password: string) => {
   };
 };
 
-// ----------------------
+
 // Service: Google Auth
-// ----------------------
+
 export const generateGoogleToken = (user: {
   id: number;
   email: string;

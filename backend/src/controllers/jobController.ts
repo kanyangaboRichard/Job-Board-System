@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import * as jobService from "../services/jobServices";
 
-// -------------------
+
 // GET all jobs
-// -------------------
+
 export const getJobs = async (req: Request, res: Response) => {
   try {
     const { title, location } = req.query;
@@ -18,9 +18,9 @@ export const getJobs = async (req: Request, res: Response) => {
   }
 };
 
-// -------------------
+
 // GET job by ID
-// -------------------
+
 export const getJobById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -40,9 +40,9 @@ export const getJobById = async (req: Request, res: Response) => {
   }
 };
 
-// -------------------
+
 // CREATE job (Admin)
-// -------------------
+
 export const createJob = async (req: Request, res: Response) => {
   try {
     const { title, company, location, description, deadline } = req.body;
@@ -52,12 +52,12 @@ export const createJob = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // ✅ Validate required fields
+    // Validate required fields
     if (!title || !company || !location || !description) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // ✅ Optional: validate deadline format
+    // Optional: validate deadline format
     if (deadline && isNaN(Date.parse(deadline))) {
       return res.status(400).json({ error: "Invalid deadline format" });
     }
@@ -68,7 +68,7 @@ export const createJob = async (req: Request, res: Response) => {
       location,
       description,
       user.id,
-      deadline // ✅ new field
+      deadline 
     );
 
     res.status(201).json(job);
@@ -78,9 +78,9 @@ export const createJob = async (req: Request, res: Response) => {
   }
 };
 
-// -------------------
+
 // UPDATE job (Admin)
-// -------------------
+
 export const updateJob = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -90,7 +90,7 @@ export const updateJob = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Job ID is required" });
     }
 
-    // ✅ Optional: validate deadline
+    //  Optional: validate deadline
     if (deadline && isNaN(Date.parse(deadline))) {
       return res.status(400).json({ error: "Invalid deadline format" });
     }
@@ -101,7 +101,7 @@ export const updateJob = async (req: Request, res: Response) => {
       company,
       location,
       description,
-      deadline // ✅ include deadline
+      deadline
     );
 
     res.json(job);
@@ -114,9 +114,9 @@ export const updateJob = async (req: Request, res: Response) => {
   }
 };
 
-// -------------------
+
 // DELETE job (Admin)
-// -------------------
+
 export const deleteJob = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

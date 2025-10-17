@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
 import * as authService from "../services/authServices";
 
-// -------------------
 // Controller: Register
-// -------------------
+
 export const register = async (req: Request, res: Response) => {
   const { name, email, password, role } = req.body; //  include role
 
@@ -16,7 +15,7 @@ export const register = async (req: Request, res: Response) => {
       email,
       password,
       name || "Anonymous",
-      role || "user" //  pass role to service, default = "user"
+      role || "user"
     );
 
     res.status(201).json({ token, user });
@@ -29,9 +28,9 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-// -------------------
+
 // Controller: Login
-// -------------------
+
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
@@ -51,13 +50,13 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-// -------------------
+
 // Controller: Google OAuth
-// -------------------
+
 export const googleCallback = (req: Request, res: Response) => {
   const user = req.user as { id: number; email: string; role: string; name?: string };
   const token = authService.generateGoogleToken(user);
 
-  // ✅ Return consistent format
+  // Return consistent format
   res.status(200).json({ token, user });
 };

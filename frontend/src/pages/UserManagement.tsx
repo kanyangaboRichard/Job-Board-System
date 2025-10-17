@@ -18,11 +18,11 @@ const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  // 🧭 Pagination state
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 6; // change this to 10 if you prefer
+  const usersPerPage = 6; // Users per page
 
-  // ✅ Build headers safely
+  //  Build headers safely
   const getAuthHeaders = () => {
     const savedToken = token || localStorage.getItem("token");
     return {
@@ -31,7 +31,7 @@ const UserManagement: React.FC = () => {
     };
   };
 
-  // ✅ Fetch all users (Admin only)
+  //  Fetch all users (Admin only)
   useEffect(() => {
     if (!user || user.role !== "admin") return;
     if (!token && !localStorage.getItem("token")) return;
@@ -59,7 +59,7 @@ const UserManagement: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token]);
 
-  // 🔍 Filter users by search
+  // Filter users by search
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return users;
@@ -71,7 +71,7 @@ const UserManagement: React.FC = () => {
     );
   }, [users, search]);
 
-  // 📄 Paginate filtered users
+  //  Paginate filtered users
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const startIndex = (currentPage - 1) * usersPerPage;
   const paginatedUsers = filteredUsers.slice(
@@ -79,7 +79,7 @@ const UserManagement: React.FC = () => {
     startIndex + usersPerPage
   );
 
-  // 🧩 Pagination handlers
+  // Pagination handlers
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage((p) => p + 1);
   };
@@ -136,7 +136,7 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  // 🚫 Access Control
+  //  Access Control
   if (user?.role !== "admin") {
     return <p className="p-6 text-danger">Access denied — Admins only</p>;
   }

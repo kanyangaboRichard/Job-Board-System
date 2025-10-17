@@ -54,7 +54,7 @@ export const createJobService = async (
   location: string,
   description: string,
   createdBy: number,
-  deadline: string // ✅ New parameter
+  deadline: string 
 ) => {
   const result = await pool.query(
     `INSERT INTO jobs (title, company, location, description, posted_by, deadline)
@@ -66,16 +66,16 @@ export const createJobService = async (
   return result.rows[0];
 };
 
-// -------------------
+
 // Update Job
-// -------------------
+
 export const updateJobService = async (
   id: string,
   title: string,
   company: string,
   location: string,
   description: string,
-  deadline: string // ✅ include deadline for update
+  deadline: string 
 ) => {
   const result = await pool.query(
     `UPDATE jobs

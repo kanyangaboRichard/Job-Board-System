@@ -17,9 +17,9 @@ export interface ApplicationRow {
   updated_at?: Date;
 }
 
-/**
- * Apply for a Job (using CV link instead of file upload)
- */
+
+ //Apply for a Job (using CV link instead of file upload)
+ 
 export const applyForJobService = async (
   jobId: string,
   userId: number,
@@ -51,9 +51,9 @@ export const applyForJobService = async (
   return result.rows[0]!;
 };
 
-/**
- * Get Applications by Job (Admin/Employer view)
- */
+
+  //Get Applications by Job (Admin/Employer view)
+ 
 export const getApplicationsByJobService = async (
   jobId: string
 ): Promise<ApplicationRow[]> => {
@@ -70,10 +70,10 @@ export const getApplicationsByJobService = async (
   return result.rows;
 };
 
-/**
- * Get Applications by User (for "My Applications" page)
- * includes job_id (used by frontend to show "Applied" badge)
- */
+
+ //Get Applications by User (for "My Applications" page)
+ //includes job_id (used by frontend to show "Applied" badge)
+ 
 export const getUserApplicationsService = async (
   userId: number
 ): Promise<ApplicationRow[]> => {
@@ -95,9 +95,9 @@ export const getUserApplicationsService = async (
   return result.rows;
 };
 
-/**
- * Get All Applications (Admin view)
- */
+
+ // Get All Applications (Admin view)
+ 
 export const getAllApplicationsService = async (): Promise<ApplicationRow[]> => {
   const result = await pool.query<ApplicationRow>(
     `SELECT a.id, j.title AS job_title, a.cover_letter, a.cv_url,
@@ -112,9 +112,9 @@ export const getAllApplicationsService = async (): Promise<ApplicationRow[]> => 
   return result.rows;
 };
 
-/**
- * Update Application Status (+ optional responseNote)
- */
+
+ //Update Application Status (+ optional responseNote)
+ 
 export const updateApplicationStatusService = async (
   id: string,
   status: ApplicationStatus,
@@ -135,9 +135,8 @@ export const updateApplicationStatusService = async (
   return result.rows[0]!;
 };
 
-/**
- * ✅ Get Application + User + Job Details (for Email Notifications)
- */
+// Get Application + User + Job Details (for Email Notifications)
+
 export const getApplicationWithUserDetailsService = async (id: string) => {
   const result = await pool.query(
     `SELECT 

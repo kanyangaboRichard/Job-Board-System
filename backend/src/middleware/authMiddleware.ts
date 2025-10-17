@@ -10,9 +10,9 @@ export interface AuthRequest extends Request {
   user?: { id: number; role: string };
 }
 
-/**
- *  Middleware: Authenticate user
- */
+
+  //Middleware: Authenticate user
+ 
 export const requireAuth = (
   req: AuthRequest,
   res: Response,
@@ -52,9 +52,9 @@ export const requireAuth = (
   }
 };
 
-/**
- * Middleware: Role-based access
- */
+
+  //Middleware: Role-based access
+ 
 export const requireRole = (role: string) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {

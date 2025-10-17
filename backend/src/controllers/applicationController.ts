@@ -2,9 +2,8 @@ import { RequestHandler } from "express";
 import * as applicationService from "../services/applicationServices";
 import transporter from "../config/email";
 
-/**
- * Apply for a job (using CV link)
- */
+//Apply for a job (using CV link)
+ 
 export const applyForJob: RequestHandler = async (req, res) => {
   try {
     const { jobId } = req.params;
@@ -50,9 +49,9 @@ export const applyForJob: RequestHandler = async (req, res) => {
   }
 };
 
-/**
- * Get applications by job (Admin/Employer)
- */
+
+ //Get applications by job (Admin/Employer)
+ 
 export const getApplicationsByJob: RequestHandler = async (req, res) => {
   try {
     const { jobId } = req.params;
@@ -70,9 +69,9 @@ export const getApplicationsByJob: RequestHandler = async (req, res) => {
   }
 };
 
-/**
- * Get current user's applications
- */
+
+ //Get current user's applications
+ 
 export const getUserApplications: RequestHandler = async (req, res) => {
   try {
     if (!req.user) {
@@ -91,9 +90,9 @@ export const getUserApplications: RequestHandler = async (req, res) => {
   }
 };
 
-/**
- * Get all applications (Admin)
- */
+
+ //Get all applications (Admin)
+ 
 export const getAllApplications: RequestHandler = async (_req, res) => {
   try {
     const applications = await applicationService.getAllApplicationsService();
@@ -104,10 +103,10 @@ export const getAllApplications: RequestHandler = async (_req, res) => {
   }
 };
 
-/**
- * Update application status (Admin)
- * Automatically sends an email to applicant after update
- */
+
+ //Update application status (Admin)
+  //Automatically sends an email to applicant after update
+ 
 export const updateApplicationStatus: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;

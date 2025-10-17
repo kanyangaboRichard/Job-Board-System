@@ -60,7 +60,7 @@ const Navbar: React.FC = () => {
                     <li className="nav-item">
                       <NavLink
                         to="/admin"
-                        end // ✅ ensures it’s only active on /admin
+                        end //ensures it’s only active on /admin
                         className={({ isActive }) =>
                           `nav-link ${isActive ? "fw-bold text-white" : ""}`
                         }

@@ -31,7 +31,7 @@ const ApplicationPage: React.FC = () => {
   // Get token from Redux
   const token = useSelector((state: RootState) => state.auth.token);
 
-  // ✅ Fetch applications on mount or when token changes
+  // Fetch applications on mount or when token changes
   useEffect(() => {
     if (!token) return;
 
@@ -50,7 +50,7 @@ const ApplicationPage: React.FC = () => {
     fetchApplications();
   }, [token]);
 
-  // ✅ Handle Accept/Reject actions
+  // Handle Accept/Reject actions
   const handleRespond = async (
     id: number | string,
     status: "accepted" | "rejected",
@@ -75,7 +75,7 @@ const ApplicationPage: React.FC = () => {
     }
   };
 
-  // ✅ Memoize options to prevent infinite re-renders
+  //  Memoize options to prevent infinite re-renders
   const options: Option[] = useMemo(() => {
     return applications
       .map((app) => ({
@@ -87,7 +87,7 @@ const ApplicationPage: React.FC = () => {
       );
   }, [applications]);
 
-  // ✅ Compute top 5 matches (runs only when options or input changes)
+  // Compute top 5 matches (runs only when options or input changes)
   useEffect(() => {
     const q = inputValue.trim().toLowerCase();
     const matches = q
@@ -96,7 +96,7 @@ const ApplicationPage: React.FC = () => {
     setDisplayedOptions(matches.slice(0, 5));
   }, [options, inputValue]);
 
-  // ✅ Filter applications by selected applicant
+  // Filter applications by selected applicant
   const filteredApplications = useMemo(() => {
     const list = selectedApplicant
       ? applications.filter((app) => app.id === selectedApplicant.value)
@@ -109,7 +109,7 @@ const ApplicationPage: React.FC = () => {
     );
   }, [applications, selectedApplicant]);
 
-  // ✅ Modal handlers
+  //  Modal handlers
   const openModal = (fullText: string) => {
     setModalContent(fullText);
     setModalOpen(true);
@@ -120,7 +120,7 @@ const ApplicationPage: React.FC = () => {
     setModalContent("");
   };
 
-  // ✅ UI RENDER
+  //  UI RENDER
   if (loading) return <p className="p-4 text-muted">Loading applications...</p>;
   if (error) return <p className="p-4 text-danger">{error}</p>;
 
