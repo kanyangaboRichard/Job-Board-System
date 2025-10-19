@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
 import * as jobService from "../services/jobServices";
 
-
 // GET all jobs
-
 export const getJobs = async (req: Request, res: Response) => {
   try {
     const { title, location } = req.query;
@@ -45,7 +43,7 @@ export const getJobById = async (req: Request, res: Response) => {
 
 export const createJob = async (req: Request, res: Response) => {
   try {
-    const { title, company, location, description, deadline } = req.body;
+    const { title, company, location, description, salary, deadline } = req.body;
     const user = req.user as { id: number };
 
     if (!user) {
@@ -62,13 +60,19 @@ export const createJob = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid deadline format" });
     }
 
+    // Validate salary
+    if (salary && (isNaN(Number(salary)) || Number(salary) <= 0)) {
+      return res.status(400).json({ error: "Invalid salary value" });
+    }
+
     const job = await jobService.createJobService(
       title,
       company,
       location,
       description,
+      Number(salary),
       user.id,
-      deadline 
+      deadline
     );
 
     res.status(201).json(job);
@@ -78,21 +82,23 @@ export const createJob = async (req: Request, res: Response) => {
   }
 };
 
-
 // UPDATE job (Admin)
 
 export const updateJob = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, company, location, description, deadline } = req.body;
+    const { title, company, location, description, salary, deadline } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: "Job ID is required" });
     }
 
-    //  Optional: validate deadline
     if (deadline && isNaN(Date.parse(deadline))) {
       return res.status(400).json({ error: "Invalid deadline format" });
+    }
+
+    if (salary && (isNaN(Number(salary)) || Number(salary) <= 0)) {
+      return res.status(400).json({ error: "Invalid salary value" });
     }
 
     const job = await jobService.updateJobService(
@@ -101,6 +107,7 @@ export const updateJob = async (req: Request, res: Response) => {
       company,
       location,
       description,
+      Number(salary),
       deadline
     );
 
@@ -116,7 +123,6 @@ export const updateJob = async (req: Request, res: Response) => {
 
 
 // DELETE job (Admin)
-
 export const deleteJob = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

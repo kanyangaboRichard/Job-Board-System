@@ -15,7 +15,7 @@ export interface JobData {
   title: string;
   description: string;
   location: string;
-  salary?: number;
+  salary: number;
 }
 
 export const createJob = async (jobData: JobData) => {
