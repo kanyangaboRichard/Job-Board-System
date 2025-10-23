@@ -1,5 +1,6 @@
 import pool from "../config/db";
 
+
 export type ApplicationStatus = "pending" | "accepted" | "rejected";
 
 export interface ApplicationRow {
@@ -16,8 +17,6 @@ export interface ApplicationRow {
   applied_at: Date;
   updated_at?: Date;
 }
-
-
  //Apply for a Job (using CV link instead of file upload)
  
 export const applyForJobService = async (
@@ -27,6 +26,7 @@ export const applyForJobService = async (
   cvLink: string
 ): Promise<ApplicationRow> => {
   // Check if user already applied for this job
+
   const check = await pool.query<{ id: number }>(
     "SELECT id FROM applications WHERE job_id = $1 AND user_id = $2",
     [jobId, userId]
@@ -36,7 +36,7 @@ export const applyForJobService = async (
     throw new Error("Already applied to this job");
   }
 
-  // Insert new application
+
   const result = await pool.query<ApplicationRow>(
     `INSERT INTO applications (job_id, user_id, cover_letter, cv_url, status)
      VALUES ($1, $2, $3, $4, 'pending')
@@ -59,7 +59,7 @@ export const getApplicationsByJobService = async (
 ): Promise<ApplicationRow[]> => {
   const result = await pool.query<ApplicationRow>(
     `SELECT a.id, a.cover_letter, a.cv_url, a.status, a.response_note, a.applied_at,
-            u.name AS applicant_name, u.email AS applicant_email
+    u.name AS applicant_name, u.email AS applicant_email
      FROM applications a
      JOIN users u ON u.id = a.user_id
      WHERE a.job_id = $1
@@ -71,7 +71,7 @@ export const getApplicationsByJobService = async (
 };
 
 
- //Get Applications by User (for "My Applications" page)
+ //Get Applications by User (with job titles)
  //includes job_id (used by frontend to show "Applied" badge)
  
 export const getUserApplicationsService = async (

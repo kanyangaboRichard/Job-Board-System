@@ -1,8 +1,37 @@
 import pool from "../config/db";
 
+export const updatejobService =async (
+  id: string,
+  title: string,
+  company: string,
+  location: string,
+  description: string,
+  salary: number,
+  deadline?: string
+) => {
+  const result = await pool.query(
+    `
+    UPDATE jobs
+    SET title = $1,
+        company = $2,
+        location = $3,
+        description = $4,
+        salary = $5,
+        deadline = $6
+    WHERE id = $7
+    RETURNING id, title, company, location, description, salary, posted_by, deadline
+    `,
+    [title, company, location, description, salary, deadline, id]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error("Job not found");
+  }
+
+  return result.rows[0];
+};
 
    //GET ALL JOBS (optionally filtered by title/location)
-
 export const getJobsService = async (title?: string, location?: string) => {
   let query = `
     SELECT id, title, company, location, description, salary, posted_by, deadline
@@ -46,7 +75,6 @@ export const getJobByIdService = async (id: string) => {
   return result.rows[0];
 };
 
-
    //CREATE JOB
 export const createJobService = async (
   title: string,
@@ -69,8 +97,7 @@ export const createJobService = async (
   return result.rows[0];
 };
 
-
-   //UPDATE JOB
+//UPDATE JOB
 
 export const updateJobService = async (
   id: string,

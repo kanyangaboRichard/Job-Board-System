@@ -66,7 +66,7 @@ const AdminReport: React.FC = () => {
       if (company.trim()) query.append("company", company.trim());
 
       const res = await axios.get<ReportData>(
-        `http://localhost:3005/api/admin/monthly-report-range?${query.toString()}`,
+        `http://localhost:3005/api/admin/report?${query.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

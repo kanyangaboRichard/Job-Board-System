@@ -1,29 +1,81 @@
-import pool from "../config/db";
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import sequelize from "../config/db"; //Your Sequelize instance
 
-export interface Job {
-  id?: number;
+
+export interface JobAttributes {
+  id: number;
   title: string;
   description: string;
-  location: string;
+  company: string;
+  posted_at: Date;
   created_at?: Date;
+  salary: number;
+  deadline: Date;
 }
 
-export const createJob = async (job: Job): Promise<Job> => {
-  const { title, description, location } = job;
-  const result = await pool.query(
-    `INSERT INTO jobs (title, description, location) 
-     VALUES ($1, $2, $3) RETURNING *`,
-    [title, description, location]
-  );
-  return result.rows[0];
-};
 
-export const getAllJobs = async (): Promise<Job[]> => {
-  const result = await pool.query(`SELECT * FROM jobs ORDER BY created_at DESC`);
-  return result.rows;
-};
+export type JobCreationAttributes = Optional<JobAttributes, "id" | "created_at">;
 
-export const getJobById = async (id: number): Promise<Job | null> => {
-  const result = await pool.query(`SELECT * FROM jobs WHERE id = $1`, [id]);
-  return result.rows[0] || null;
-};
+
+export class JobModel
+  extends Model<JobAttributes, JobCreationAttributes>
+  implements JobAttributes
+{
+  public id!: number;
+  public title!: string;
+  public description!: string;
+  public company!: string;
+  public posted_at!: Date;
+  public created_at?: Date;
+  public salary!: number;
+  public deadline!: Date;
+}
+
+
+JobModel.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    company: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    posted_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+    },
+    salary: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    deadline: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+  },
+  {
+    sequelize: sequelize as unknown as Sequelize, 
+    tableName: "jobs",
+    modelName: "JobModel",
+    timestamps: false, 
+  }
+);
+
+export default JobModel;

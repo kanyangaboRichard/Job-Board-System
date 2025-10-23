@@ -2,11 +2,10 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import pool from "../config/db";
 
+
 const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
-// ----------------------
 // Service: Register User
-// ----------------------
 export const registerUser = async (
   email: string,
   password: string,
@@ -34,7 +33,7 @@ export const registerUser = async (
   const token = jwt.sign(
     { id: user.id, role: user.role, email: user.email, name: user.name },
     JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "1hr" }
   );
 
   return { token, user };
@@ -57,7 +56,7 @@ export const loginUser = async (email: string, password: string) => {
   const token = jwt.sign(
     { id: user.id, role: user.role, email: user.email, name: user.name },
     JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "1hr" }
   );
 
   return {
@@ -78,6 +77,6 @@ export const generateGoogleToken = (user: {
   return jwt.sign(
     { id: user.id, role: user.role, email: user.email, name: user.name },
     JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "1hr" }
   );
 };

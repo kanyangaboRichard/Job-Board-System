@@ -7,10 +7,9 @@ const router = Router();
 
 
    //Admin Report — Detailed Applications Table
-  //GET /api/admin/monthly-report-range?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&company=CompanyName
+  //GET /api/admin/report?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&company=CompanyName
  
-router.get(
-  "/monthly-report-range",
+router.get("/report",
   passport.authenticate("jwt", { session: false }),
   checkAdmin,
   async (req: Request, res: Response) => {
@@ -96,7 +95,7 @@ router.get(
   }
 );
 
-  //Get all distinct companies for the Admin dropdown filter
+  
   //GET /api/admin/companies
  
 router.get(

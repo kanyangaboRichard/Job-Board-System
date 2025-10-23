@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
 import * as applicationService from "../services/applicationServices";
-import transporter from "../config/email";
+import sendEmail from "../util/sendEmail";
+
 
 //Apply for a job (using CV link)
  
@@ -105,7 +106,7 @@ export const getAllApplications: RequestHandler = async (_req, res) => {
 
 
  //Update application status (Admin)
-  //Automatically sends an email to applicant after update
+  
  
 export const updateApplicationStatus: RequestHandler = async (req, res) => {
   try {
@@ -142,45 +143,26 @@ export const updateApplicationStatus: RequestHandler = async (req, res) => {
 
     //  Fetch applicant + job details for email
     const details = await applicationService.getApplicationWithUserDetailsService(id);
-    const { applicant_email, applicant_name, job_title } = details;
-
-    //  Send email notification
+    
+    console.log("Application details for notification:", details);
+    
+    // Send notification email to applicant if email available (do not fail the request if email fails)
     try {
-      let emailBody = `
-        <p>Hello ${applicant_name || "Applicant"},</p>
-        <p>Your application for <strong>${job_title}</strong> has been <strong>${status}</strong>.</p>
-      `;
-
-      if (status === "rejected" && responseNote) {
-        emailBody += `
-          <div style="background-color:#ffe6e6; padding:10px; border-radius:8px; margin:10px 0;">
-            <p><strong>Reason for rejection:</strong></p>
-            <p style="color:#b30000;">${responseNote}</p>
-          </div>
-        `;
-      } else if (responseNote) {
-        emailBody += `<p><em>Message from Admin:</em> ${responseNote}</p>`;
+      if (details?.user?.email) {
+        const to = details.user.email;
+        const subject = `Your application status has been updated to "${status}"`;
+        const body =
+          `Hello ${details.user.name ?? "Applicant"},\n\n` +
+          `Your application for the position "${details.job?.title ?? "the job"}" has been ${status}.\n\n` +
+          `${responseNote ? `Response: ${responseNote}\n\n` : ""}` +
+          `Best regards,\nJob Board Team`;
+        await sendEmail(to, subject, body);
       }
-
-      emailBody += `
-        <p>Thank you for applying!</p>
-        <br/>
-        <p>Best regards,<br/>Job Board Team</p>
-      `;
-
-      await transporter.sendMail({
-        from: `"Job Board System" <${process.env.EMAIL_USER}>`,
-        to: applicant_email,
-        cc: process.env.SYSTEM_EMAIL || process.env.EMAIL_USER,
-        subject: `Your Application for "${job_title}" has been ${status}`,
-        html: emailBody,
-      });
-
-      console.log(` Email sent successfully to ${applicant_email}`);
     } catch (emailErr) {
-      console.error(" Email sending failed:", emailErr);
+      console.error("Failed to send status notification email:", emailErr);
+      // don't block the response if email sending fails
     }
-
+    
     return res.json(updated);
   } catch (err: any) {
     if (err.message === "Application not found") {
