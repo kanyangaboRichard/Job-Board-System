@@ -1,3 +1,5 @@
+--user
+
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
@@ -5,4 +7,3 @@ CREATE TABLE IF NOT EXISTS users (
   role VARCHAR(50) DEFAULT 'user',
   created_at TIMESTAMP DEFAULT NOW()
 );
--- 🔹 Add password_hash column to users table

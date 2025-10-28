@@ -13,9 +13,12 @@ export interface applicationModelAttributes {
   response_note?: string | null;
   applied_at?: Date;
   updated_at?: Date;
+  applicant_email?: string;
+  applicant_name?: string;
+  job_title?: string;
 
 }
-export type ApplicationCreationAttributes = Optional<applicationModelAttributes, "id" | "status" | "response_note" | "applied_at" | "updated_at">;
+export type ApplicationCreationAttributes = Optional<applicationModelAttributes, "id" | "status" | "response_note" | "applied_at" | "updated_at" | "applicant_email" | "applicant_name" | "job_title">;
 
 export class applicationModel extends Model<applicationModelAttributes,
  ApplicationCreationAttributes> 
@@ -30,6 +33,10 @@ export class applicationModel extends Model<applicationModelAttributes,
   public response_note?: string | null ;
   public applied_at?: Date ;
   public updated_at?: Date ;  
+  public applicant_email?: string ;
+  public applicant_name?: string ;
+  public job_title?: string ;
+  
 }
 // Initialize the model
 (applicationModel as any).init(

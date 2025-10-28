@@ -11,6 +11,7 @@ export interface JobAttributes {
   created_at?: Date;
   salary: number;
   deadline: Date;
+  company_id: number;
 }
 
 
@@ -29,6 +30,7 @@ export class JobModel
   public created_at?: Date;
   public salary!: number;
   public deadline!: Date;
+  public company_id!: number;
 }
 
 
@@ -67,6 +69,10 @@ JobModel.init(
     },
     deadline: {
       type: DataTypes.DATE,
+      allowNull: false,
+    },
+    company_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
   },

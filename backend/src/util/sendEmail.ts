@@ -20,10 +20,13 @@ const transporter: Transporter = nodemailer.createTransport({
   },
 });
 
-// sending email
-export const sendEmail = async (params: SendEmailParams, _subject: string, _body: string): Promise<void> => {
-  const { applicant_email, applicant_name, job_title, status, responseNote } = params;
-
+export default async function sendEmail({
+  applicant_email,
+  applicant_name,
+  job_title,
+  status,
+  responseNote,
+}: SendEmailParams): Promise<void> {
   const fromAddress = process.env.EMAIL_USER ?? "no-reply@example.com";
   const ccAddress = process.env.SYSTEM_EMAIL ?? process.env.EMAIL_USER;
 
@@ -62,11 +65,9 @@ export const sendEmail = async (params: SendEmailParams, _subject: string, _body
     }
 
     await transporter.sendMail(mailOptions);
-
-    console.log(`Email sent successfully to ${applicant_email}`);
-  } catch (emailErr) {
-    console.error("Email sending failed:", emailErr);
+    console.log(` Email sent successfully to ${applicant_email}`);
+  } catch (error) {
+    console.error(" Email sending failed:", error);
+    throw new Error("Email sending failed");
   }
-};
-
-export default sendEmail;
+}

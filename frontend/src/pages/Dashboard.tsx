@@ -87,6 +87,7 @@ const Dashboard: React.FC = () => {
           .slice(0, 5)
           .map((j) => ({ value: j.id, label: j.title }));
         setOptions(initial);
+        
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         setError("Failed to load jobs.");
@@ -198,7 +199,7 @@ const Dashboard: React.FC = () => {
         <div className="row">
           {currentJobs.length > 0 ? (
             currentJobs.map((job) => {
-              const applied = appliedJobs.includes(job.id);
+              const applied = appliedJobs.includes(Number(job.id));
               return (
                 <div key={job.id} className="col-md-6 col-lg-4 mb-4">
                   <div className="card shadow-sm h-100 position-relative">

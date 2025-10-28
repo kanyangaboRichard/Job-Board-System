@@ -97,7 +97,6 @@ router.get("/report",
 
   
   //GET /api/admin/companies
- 
 router.get(
   "/companies",
   passport.authenticate("jwt", { session: false }),
