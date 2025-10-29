@@ -2,9 +2,9 @@ import pool from "../config/db";
 import { JobAttributes } from "../models/jobModels";
 
 export const JobService = {
-  // =====================================================
-  // 1️⃣  Get all jobs (optionally filter by title/location)
-  // =====================================================
+  
+  //  Get all jobs (optionally filter by title/location)
+  
   async all(title?: string, location?: string): Promise<JobAttributes[]> {
     try {
       let query = `
@@ -20,7 +20,7 @@ export const JobService = {
           j.posted_by,
           j.created_at
         FROM jobs j
-        JOIN companies c ON j.company_id = c.company_id
+        LEFT JOIN companies c ON j.company_id = c.company_id
       `;
 
       const conditions: string[] = [];
@@ -45,14 +45,14 @@ export const JobService = {
       const result = await pool.query<JobAttributes>(query, params);
       return result.rows;
     } catch (err) {
-      console.error("❌ [JobService.all] Error fetching jobs:", err);
+      console.error("[JobService.all] Error fetching jobs:", err);
       throw new Error("Database error: failed to fetch jobs");
     }
   },
 
-  // =====================================================
-  // 2️⃣  Get job by ID
-  // =====================================================
+  
+  //  Get job by ID 
+  
   async byId(id: number): Promise<JobAttributes> {
     try {
       const result = await pool.query<JobAttributes>(
@@ -70,23 +70,28 @@ export const JobService = {
           j.posted_by,
           j.created_at
         FROM jobs j
-        JOIN companies c ON j.company_id = c.company_id
+        LEFT JOIN companies c ON j.company_id = c.company_id
         WHERE j.id = $1
         `,
         [id]
       );
 
-      if (result.rows.length === 0) throw new Error("Job not found");
-      return result.rows[0]!; // ✅ safe now
+      if (result.rows.length === 0) {
+        console.warn(`No job found for ID: ${id}`);
+        throw new Error("Job not found");
+      }
+
+      console.log( result.rows[0]);
+      return result.rows[0]!;
     } catch (err) {
-      console.error("❌ [JobService.byId] Error fetching job by ID:", err);
+      console.error(" Error fetching job by ID:", err);
       throw err;
     }
   },
 
-  // =====================================================
-  // 3️⃣  Get jobs by company ID
-  // =====================================================
+  
+  //  Get jobs by company ID
+  
   async getByCompanyId(companyId: number): Promise<JobAttributes[]> {
     try {
       const result = await pool.query<JobAttributes>(
@@ -104,7 +109,7 @@ export const JobService = {
           j.posted_by,
           j.created_at
         FROM jobs j
-        JOIN companies c ON j.company_id = c.company_id
+        LEFT JOIN companies c ON j.company_id = c.company_id
         WHERE j.company_id = $1
         ORDER BY j.created_at DESC
         `,
@@ -112,14 +117,14 @@ export const JobService = {
       );
       return result.rows;
     } catch (err) {
-      console.error("❌ [JobService.getByCompanyId] Error fetching company jobs:", err);
+      console.error(" Error fetching company jobs:", err);
       throw new Error("Database error: failed to fetch jobs by company ID");
     }
   },
 
-  // =====================================================
-  // 4️⃣  Create new job
-  // =====================================================
+  
+  //   Create new job
+  
   async create(
     job: {
       title: string;
@@ -154,16 +159,16 @@ export const JobService = {
       );
 
       if (result.rows.length === 0) throw new Error("Failed to create job");
-      return result.rows[0]!; 
+      return result.rows[0]!;
     } catch (err) {
-      console.error(" [JobService.create] Error creating job:", err);
+      console.error(" Error creating job:", err);
       throw new Error("Database error: failed to create job");
     }
   },
 
-  // =====================================================
-  // 5️⃣  Update job (partial update allowed)
-  // =====================================================
+  
+  // Update job
+  
   async update(
     id: number,
     fields: Partial<JobAttributes> & { location?: string }
@@ -196,9 +201,9 @@ export const JobService = {
       const result = await pool.query<JobAttributes>(query, params);
 
       if (result.rows.length === 0) throw new Error("Job not found");
-      return result.rows[0]!; 
+      return result.rows[0]!;
     } catch (err) {
-      console.error(" [JobService.update] Error updating job:", err);
+      console.error("[JobService.update] Error updating job:", err);
       throw err;
     }
   },

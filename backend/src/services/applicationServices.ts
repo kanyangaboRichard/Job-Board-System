@@ -28,7 +28,7 @@ export const ApplicationService = {
     const result = await pool.query<applicationModelAttributes>(
       `SELECT a.*, u.name AS applicant_name, u.email AS applicant_email
        FROM applications a
-       JOIN users u ON u.id = a.user_id
+       LEFT JOIN users u ON u.id = a.user_id
        WHERE a.job_id = $1
        ORDER BY a.applied_at DESC`,
       [jobId]
@@ -41,7 +41,7 @@ export const ApplicationService = {
     const result = await pool.query<applicationModelAttributes>(
       `SELECT a.*, j.title AS job_title
        FROM applications a
-       JOIN jobs j ON j.id = a.job_id
+       LEFT JOIN jobs j ON j.id = a.job_id
        WHERE a.user_id = $1
        ORDER BY a.applied_at DESC`,
       [userId]
@@ -54,8 +54,8 @@ export const ApplicationService = {
     const result = await pool.query<applicationModelAttributes>(
       `SELECT a.*, j.title AS job_title, u.name AS applicant_name, u.email AS applicant_email
        FROM applications a
-       JOIN jobs j ON j.id = a.job_id
-       JOIN users u ON u.id = a.user_id
+       LEFT JOIN jobs j ON j.id = a.job_id
+       LEFT JOIN users u ON u.id = a.user_id
        ORDER BY a.applied_at DESC`
     );
     return result.rows;
@@ -80,8 +80,8 @@ export const ApplicationService = {
     const result = await pool.query<applicationModelAttributes>(
       `SELECT a.id, a.status, a.response_note, j.title AS job_title, u.name AS applicant_name, u.email AS applicant_email
        FROM applications a
-       JOIN users u ON u.id = a.user_id
-       JOIN jobs j ON j.id = a.job_id
+       LEFT JOIN users u ON u.id = a.user_id
+       LEFT JOIN jobs j ON j.id = a.job_id
        WHERE a.id = $1`,
       [id]
     );

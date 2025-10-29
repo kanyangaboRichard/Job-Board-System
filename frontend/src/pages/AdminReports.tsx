@@ -66,7 +66,7 @@ const AdminReport: React.FC = () => {
       if (company.trim()) query.append("company", company.trim());
 
       const res = await axios.get<ReportData>(
-        `http://localhost:3005/api/admin/report?${query.toString()}`,
+        `http://localhost:3005/api/admin/reports?${query.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -95,7 +95,7 @@ const AdminReport: React.FC = () => {
 
     try {
       const res = await axios.get<string[] | CompaniesResponse[]>(
-        `http://localhost:3005/api/admin/companies?search=${inputValue}`,
+        `http://localhost:3005/api/admin/reports/companies?search=${inputValue}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -125,7 +125,7 @@ const AdminReport: React.FC = () => {
     if (!reportRef.current) return;
     const element = reportRef.current;
     const canvas = await html2canvas(element, { scale: 2 });
-    const imgData = canvas.toDataURL("image/png");
+    const imgData = canvas.toDataURL("assets/Isco.jpeg");
 
     const pdf = new jsPDF("p", "mm", "a4");
     const pdfWidth = pdf.internal.pageSize.getWidth();

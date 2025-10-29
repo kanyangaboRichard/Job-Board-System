@@ -10,7 +10,7 @@ import jobRoutes from "./routes/jobRoutes";
 import applicationRoutes from "./routes/applicationRoutes";
 import companyRoutes from "./routes/companyRoutes";
 import adminRoutes from "./routes/adminRoutes";
-import adminReportRoutes from "./routes/adminReport";
+import adminReportRoutes from "./routes/adminReportRoute";
 
 // Initialize Express
 const app = express();

@@ -50,8 +50,8 @@ export const getApplications = async (): Promise<Application[]> => {
 };
 
 // Get user applications
-export const getUserApplications = async (userId: number | string): Promise<Application[]> => {
-  const res = await api.get<ApplicationResponse[]>(`/applications/user/${userId}`);
+export const getUserApplications = async (): Promise<Application[]> => {
+  const res = await api.get<ApplicationResponse[]>(`/applications/user`);
   return res.data.map(normalizeApplication);
 };
 

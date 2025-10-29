@@ -3,6 +3,10 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
 import axios from "axios";
 import Select from "react-select";
+import CreatableSelect from "react-select/creatable";
+
+
+// TypeScript Interfaces
 
 interface Job {
   id: number;
@@ -34,40 +38,43 @@ interface Option {
   label: string;
 }
 
+
+// Main Component
+
 const AdminDashboard: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const token = useSelector((state: RootState) => state.auth.token);
 
+
+  // State Management
+  
   const [jobs, setJobs] = useState<Job[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Form states
+  // Form fields
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [salary, setSalary] = useState("");
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
   const [companyId, setCompanyId] = useState<string>("");
+
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  // Add Company mini modal
-  const [showCompanyModal, setShowCompanyModal] = useState(false);
-  const [newCompanyName, setNewCompanyName] = useState("");
-  const [newCompanyDescription, setNewCompanyDescription] = useState("");
-  const [newCompanyLocation, setNewCompanyLocation] = useState("");
-
-  // Search & Pagination
+  // Pagination & Filter
   const [selectedCompany, setSelectedCompany] = useState<Option | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 6;
 
-  // =============================
-  // Fetch Jobs
-  // =============================
+  
+  // Fetch Data
+  
+
+  // Fetch all jobs
   useEffect(() => {
     if (!token) return;
     const fetchJobs = async () => {
@@ -94,9 +101,7 @@ const AdminDashboard: React.FC = () => {
     fetchJobs();
   }, [token]);
 
-  // =============================
-  // Fetch Companies for dropdown
-  // =============================
+  // Fetch companies
   useEffect(() => {
     if (!token) return;
     const fetchCompanies = async () => {
@@ -114,9 +119,7 @@ const AdminDashboard: React.FC = () => {
     fetchCompanies();
   }, [token]);
 
-  // =============================
-  // Fetch Stats
-  // =============================
+  // Fetch admin stats
   useEffect(() => {
     if (!token) return;
     const fetchStats = async () => {
@@ -133,9 +136,9 @@ const AdminDashboard: React.FC = () => {
     fetchStats();
   }, [token]);
 
-  // =============================
+  
   // Filtering & Pagination
-  // =============================
+
   const companyOptions: Option[] = useMemo(() => {
     const uniqueCompanies = Array.from(new Set(jobs.map((j) => j.company_name)));
     return uniqueCompanies.map((comp) => ({ value: comp, label: comp }));
@@ -158,9 +161,9 @@ const AdminDashboard: React.FC = () => {
   };
   useEffect(() => setCurrentPage(1), [selectedCompany]);
 
-  // =============================
-  // Save (Add/Edit Job)
-  // =============================
+  
+  // Save / Update Job
+  
   const handleSave = async () => {
     const salaryNum = Number(salary);
     const company_id = Number(companyId);
@@ -194,7 +197,7 @@ const AdminDashboard: React.FC = () => {
         salary: salaryNum,
         deadline,
         company_id,
-        posted_by: user?.name || "admin",
+        posted_by: user?.id || user?.name || "admin",
       });
 
       const res = await fetch(url, {
@@ -222,50 +225,9 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // =============================
-  // Create a new Company
-  // =============================
-  const handleAddCompany = async () => {
-    if (!newCompanyName.trim() || !newCompanyDescription.trim()) {
-      alert("Please enter both company name and description.");
-      return;
-    }
-
-    try {
-      const res = await fetch("http://localhost:3005/api/companies", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          company_name: newCompanyName,
-          company_description: newCompanyDescription,
-          company_location: newCompanyLocation,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to create company");
-      const created = await res.json();
-
-      // Update companies list + auto-select new one
-      setCompanies((prev) => [created, ...prev]);
-      setCompanyId(String(created.company_id));
-
-      // Close mini modal
-      setShowCompanyModal(false);
-      setNewCompanyName("");
-      setNewCompanyDescription("");
-      setNewCompanyLocation("");
-    } catch (err) {
-      console.error("Error creating company:", err);
-      alert("Failed to create company. Please try again.");
-    }
-  };
-
-  // =============================
+  
   // Delete Job
-  // =============================
+  
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
 
@@ -282,9 +244,9 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // =============================
+  
   // Reset Form
-  // =============================
+
   const resetForm = () => {
     setTitle("");
     setLocation("");
@@ -297,9 +259,9 @@ const AdminDashboard: React.FC = () => {
     setCompanyId("");
   };
 
-  // =============================
-  // Render
-  // =============================
+  
+  // Render Section
+
   if (!token) return <p className="p-4 text-muted">Please log in as an admin.</p>;
   if (user?.role !== "admin")
     return <p className="p-4 text-danger">Access denied.</p>;
@@ -322,7 +284,7 @@ const AdminDashboard: React.FC = () => {
           </button>
         </div>
 
-        {/* React-select company filter */}
+        {/* Company filter */}
         <div style={{ minWidth: 250 }}>
           <Select
             options={companyOptions}
@@ -334,7 +296,7 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats Section */}
       {stats && (
         <div className="bg-info rounded-3 shadow-sm p-3 mb-4">
           <div className="d-flex flex-wrap justify-content-center gap-3">
@@ -459,10 +421,12 @@ const AdminDashboard: React.FC = () => {
                   onClick={resetForm}
                 ></button>
               </div>
+
               <div className="modal-body">
                 {error && (
                   <div className="alert alert-danger py-2">{error}</div>
                 )}
+
                 <form className="vstack gap-3">
                   <input
                     className="form-control"
@@ -471,40 +435,63 @@ const AdminDashboard: React.FC = () => {
                     onChange={(e) => setTitle(e.target.value)}
                   />
 
-                  {/* Company Dropdown + Add button */}
-                  <div className="d-flex align-items-center gap-2">
-                    <div className="flex-grow-1">
-                      <Select
-                        options={companies.map((c) => ({
-                          value: c.company_id,
-                          label: c.company_name,
-                        }))}
-                        value={
-                          companyId
-                            ? {
-                                value: Number(companyId),
-                                label:
-                                  companies.find(
-                                    (c) =>
-                                      c.company_id === Number(companyId)
-                                  )?.company_name || "",
-                              }
-                            : null
-                        }
-                        onChange={(opt) =>
-                          setCompanyId(opt ? String(opt.value) : "")
-                        }
-                        placeholder="Select company..."
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-outline-success btn-sm"
-                      onClick={() => setShowCompanyModal(true)}
-                    >
-                      + Add
-                    </button>
-                  </div>
+                  {/* Company Selector */}
+                  <CreatableSelect
+                    options={companies.map((c) => ({
+                      value: c.company_id,
+                      label: c.company_name,
+                    }))}
+                    value={
+                      companyId
+                        ? {
+                            value: Number(companyId),
+                            label:
+                              companies.find(
+                                (c) => c.company_id === Number(companyId)
+                              )?.company_name || "",
+                          }
+                        : null
+                    }
+                    onChange={(opt) =>
+                      setCompanyId(opt ? String(opt.value) : "")
+                    }
+                    onCreateOption={async (inputValue) => {
+                      try {
+                        const res = await fetch(
+                          "http://localhost:3005/api/companies",
+                          {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                              company_name: inputValue,
+                              company_description:
+                                "Created automatically from job form",
+                              company_location: "N/A",
+                            }),
+                          }
+                        );
+
+                        if (!res.ok)
+                          throw new Error("Failed to create company");
+
+                        const created = await res.json();
+                        setCompanies((prev) => [created, ...prev]);
+                        setCompanyId(String(created.company_id));
+                      } catch (err) {
+                        console.error("Error creating company:", err);
+                        alert("Failed to create company. Please try again.");
+                      }
+                    }}
+                    formatCreateLabel={(inputValue) =>
+                      `Create "${inputValue}"`
+                    }
+                    placeholder="Select or type to create company..."
+                    isClearable
+                    isSearchable
+                  />
 
                   <input
                     className="form-control"
@@ -534,69 +521,13 @@ const AdminDashboard: React.FC = () => {
                   />
                 </form>
               </div>
+
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={resetForm}>
                   Cancel
                 </button>
                 <button className="btn btn-primary" onClick={handleSave}>
                   Save
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Mini Modal: Add Company */}
-      {showCompanyModal && (
-        <div
-          className="modal fade show d-block"
-          style={{ background: "rgba(0,0,0,0.5)" }}
-        >
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Add New Company</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowCompanyModal(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <form className="vstack gap-3">
-                  <input
-                    className="form-control"
-                    placeholder="Company Name"
-                    value={newCompanyName}
-                    onChange={(e) => setNewCompanyName(e.target.value)}
-                  />
-                  <input
-                    className="form-control"
-                    placeholder="Company Location"
-                    value={newCompanyLocation}
-                    onChange={(e) => setNewCompanyLocation(e.target.value)}
-                  />
-                  <textarea
-                    className="form-control"
-                    rows={3}
-                    placeholder="Company Description"
-                    value={newCompanyDescription}
-                    onChange={(e) =>
-                      setNewCompanyDescription(e.target.value)
-                    }
-                  />
-                </form>
-              </div>
-              <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setShowCompanyModal(false)}
-                >
-                  Cancel
-                </button>
-                <button className="btn btn-success" onClick={handleAddCompany}>
-                  Save Company
                 </button>
               </div>
             </div>
