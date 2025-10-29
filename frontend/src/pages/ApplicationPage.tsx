@@ -128,7 +128,7 @@ const ApplicationPage: React.FC = () => {
     <div className="container py-4">
       <h1 className="mb-4">All Applications</h1>
 
-      {/* 🔍 react-select search (alphabetical) */}
+      {/* react-select search (alphabetical) */}
       <div className="mb-4" style={{ maxWidth: 500 }}>
         <Select<Option, false>
           options={displayedOptions}
@@ -203,7 +203,7 @@ const ApplicationPage: React.FC = () => {
         </div>
       )}
 
-      {/* 🪟 Simple modal for full cover letter */}
+      {/* Simple modal for full cover letter */}
       {modalOpen && (
         <>
           <div

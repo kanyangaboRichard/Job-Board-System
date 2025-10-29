@@ -1,143 +1,122 @@
 import { Request, Response } from "express";
-import * as jobService from "../services/jobServices";
+import { JobService } from "../services/jobServices";
 
-// GET all jobs
-export const getJobs = async (req: Request, res: Response) => {
-  try {
-    const { title, location } = req.query;
-    const jobs = await jobService.getJobsService(
-      title as string | undefined,
-      location as string | undefined
-    );
-    res.json(jobs);
-  } catch (err) {
-    console.error("Get jobs error:", err);
-    res.status(500).json({ error: "Failed to fetch jobs" });
-  }
-};
-
-
-// GET job by ID
-
-export const getJobById = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({ error: "Job ID is required" });
+export const JobController = {
+  
+  // Get all jobs (optionally filter by title/location)
+  
+  async all(req: Request, res: Response) {
+    try {
+      const { title, location } = req.query;
+      const jobs = await JobService.all(title as string, location as string);
+      res.json(jobs);
+    } catch (err) {
+      console.error(" Get jobs error:", err);
+      res.status(500).json({ error: "Failed to fetch jobs" });
     }
+  },
 
-    const job = await jobService.getJobByIdService(id);
-    res.json(job);
-  } catch (err: any) {
-    if (err.message === "Job not found") {
-      return res.status(404).json({ error: err.message });
+  
+  // Get job by ID
+  
+  async byId(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const job = await JobService.byId(Number(id));
+      res.json(job);
+    } catch (err: any) {
+      if (err.message === "Job not found") {
+        return res.status(404).json({ error: err.message });
+      }
+      console.error(" Get job by ID error:", err);
+      res.status(500).json({ error: "Failed to fetch job" });
     }
-    console.error("Get job error:", err);
-    res.status(500).json({ error: "Failed to fetch job" });
-  }
-};
+  },
 
+  
+  // Create new job
+  
+  async create(req: Request, res: Response) {
+    try {
+      const {
+        title,
+        description,
+        salary,
+        deadline,
+        company_id,
+        location,
+        posted_by,
+      } = req.body;
 
-// CREATE job (Admin)
+      // Debug log for transparency
+      console.log("Incoming Job Payload:", req.body);
 
-export const createJob = async (req: Request, res: Response) => {
-  try {
-    const { title, company, location, description, salary, deadline } = req.body;
-    const user = req.user as { id: number };
+      // Validate required fields
+      if (!title || !description || !company_id || !location) {
+        return res.status(400).json({
+          error:
+            "Missing required fields: title, description, company_id, or location",
+        });
+      }
 
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      // Convert to proper types
+      const job = {
+        title,
+        description,
+        salary: Number(salary) || 0,
+        deadline,
+        company_id: Number(company_id),
+        location,
+        posted_by: Number(posted_by), 
+        posted_at: new Date(),
+      };
+
+      // Validate numeric fields
+      if (isNaN(job.company_id) || isNaN(job.posted_by)) {
+        return res.status(400).json({
+          error: "company_id and posted_by must be valid integers.",
+        });
+      }
+
+      const newJob = await JobService.create(job);
+      res.status(201).json(newJob);
+    } catch (err) {
+      console.error(" Create job error:", err);
+      res.status(500).json({ error: "Failed to create job" });
     }
+  },
 
-    // Validate required fields
-    if (!title || !company || !location || !description) {
-      return res.status(400).json({ error: "All fields are required" });
+  
+  //  Update job by ID
+
+  async update(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const updatedJob = await JobService.update(Number(id), req.body);
+      res.json(updatedJob);
+    } catch (err: any) {
+      if (err.message === "Job not found") {
+        return res.status(404).json({ error: err.message });
+      }
+      console.error(" Update job error:", err);
+      res.status(500).json({ error: "Failed to update job" });
     }
+  },
 
-    // Optional: validate deadline format
-    if (deadline && isNaN(Date.parse(deadline))) {
-      return res.status(400).json({ error: "Invalid deadline format" });
+  
+  // Delete job by ID
+  
+  async remove(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      await JobService.remove(Number(id));
+      res.json({ message: "Job deleted successfully" });
+    } catch (err: any) {
+      if (err.message === "Job not found") {
+        return res.status(404).json({ error: err.message });
+      }
+      console.error(" Delete job error:", err);
+      res.status(500).json({ error: "Failed to delete job" });
     }
-
-    // Validate salary
-    if (salary && (isNaN(Number(salary)) || Number(salary) <= 0)) {
-      return res.status(400).json({ error: "Invalid salary value" });
-    }
-
-    const job = await jobService.createJobService(
-      title,
-      company,
-      location,
-      description,
-      Number(salary),
-      user.id,
-      deadline
-    );
-
-    res.status(201).json(job);
-  } catch (err) {
-    console.error("Create job error:", err);
-    res.status(500).json({ error: "Failed to create job" });
-  }
-};
-
-// UPDATE job (Admin)
-
-export const updateJob = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { title, company, location, description, salary, deadline } = req.body;
-
-    if (!id) {
-      return res.status(400).json({ error: "Job ID is required" });
-    }
-
-    if (deadline && isNaN(Date.parse(deadline))) {
-      return res.status(400).json({ error: "Invalid deadline format" });
-    }
-
-    if (salary && (isNaN(Number(salary)) || Number(salary) <= 0)) {
-      return res.status(400).json({ error: "Invalid salary value" });
-    }
-
-    const job = await jobService.updateJobService(
-      id,
-      title,
-      company,
-      location,
-      description,
-      Number(salary),
-      deadline
-    );
-
-    res.json(job);
-  } catch (err: any) {
-    if (err.message === "Job not found") {
-      return res.status(404).json({ error: err.message });
-    }
-    console.error("Update job error:", err);
-    res.status(500).json({ error: "Failed to update job" });
-  }
-};
-
-
-// DELETE job (Admin)
-export const deleteJob = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({ error: "Job ID is required" });
-    }
-
-    await jobService.deleteJobService(id);
-    res.json({ message: "Job deleted successfully" });
-  } catch (err: any) {
-    if (err.message === "Job not found") {
-      return res.status(404).json({ error: err.message });
-    }
-    console.error("Delete job error:", err);
-    res.status(500).json({ error: "Failed to delete job" });
-  }
+  },
 };

@@ -1,133 +1,97 @@
-import { Router, Request, Response } from "express";
-import passport from "passport";
-import pool from "../config/db";
-import { checkAdmin } from "../middleware/checkAdmin";
+import { DataTypes, Model, Optional } from "sequelize";
+import sequelize from "../config/db"; // your Sequelize instance
 
-const router = Router();
 
- //Admin Report — Detailed Applications Table
-  //GET /api/admin/monthly-report-range?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&company=CompanyName
- 
-router.get(
-  "/monthly-report-range",
-  passport.authenticate("jwt", { session: false }),
-  checkAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { startDate, endDate, company } = req.query;
 
-      // Default range = current month
-      const start = startDate
-        ? new Date(startDate as string)
-        : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-      const end = endDate ? new Date(endDate as string) : new Date();
+export interface applicationModelAttributes {
+  id: number;
+  job_id: number;
+  user_id: number;
+  cover_letter?: string;
+  cv_url?: string;
+  status?: "pending" | "accepted" | "rejected";
+  response_note?: string | null;
+  applied_at?: Date;
+  updated_at?: Date;
+  applicant_email?: string;
+  applicant_name?: string;
+  job_title?: string;
 
-      const params: any[] = [start, end];
-      let companyFilter = "";
+}
+export type ApplicationCreationAttributes = Optional<applicationModelAttributes, "id" | "status" | "response_note" | "applied_at" | "updated_at" | "applicant_email" | "applicant_name" | "job_title">;
 
-      if (company && typeof company === "string" && company.trim() !== "") {
-        companyFilter = "AND j.company = $3";
-        params.push(company.trim());
-      }
+export class applicationModel extends Model<applicationModelAttributes,
+ ApplicationCreationAttributes> 
+ implements applicationModelAttributes {
+  
+  public id!: number;
+  public job_id!: number;
+  public user_id!: number;
+  public cover_letter?: string;
+  public cv_url?: string  ;
+  public status?: "pending" | "accepted" | "rejected" ;
+  public response_note?: string | null ;
+  public applied_at?: Date ;
+  public updated_at?: Date ;  
+  public applicant_email?: string ;
+  public applicant_name?: string ;
+  public job_title?: string ;
+  
+}
+// Initialize the model
+(applicationModel as any).init(
+  {       
 
-      //  Totals for summary cards
-      const totalJobsQuery = `
-        SELECT COUNT(*) AS count
-        FROM jobs j
-        WHERE j.created_at BETWEEN $1 AND $2
-        ${companyFilter}
-      `;
+    id: { 
+      type: DataTypes.INTEGER.UNSIGNED, 
+      autoIncrement: true, 
+      primaryKey: true  
+    },
+    job_id: { 
+      type: DataTypes.INTEGER.UNSIGNED, 
+      allowNull: false
 
-      const applicationsQuery = `
-        SELECT
-          COUNT(*) AS total_applications,
-          SUM(CASE WHEN a.status = 'accepted' THEN 1 ELSE 0 END) AS accepted,
-          SUM(CASE WHEN a.status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
-          SUM(CASE WHEN a.status = 'pending' THEN 1 ELSE 0 END) AS pending
-        FROM applications a
-        INNER JOIN jobs j ON a.job_id = j.id
-        WHERE a.applied_at BETWEEN $1 AND $2
-        ${companyFilter}
-      `;
+    },
+    user_id: { 
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false
+    },
+    cover_letter: { 
+      type: DataTypes.TEXT,
 
-      //  Detailed Applications Data
-      const detailedApplicationsQuery = `
-        SELECT 
-          j.company,
-          u.name AS applicant_name,
-          j.title AS job_title,
-          a.status,
-          a.applied_at
-        FROM applications a
-        INNER JOIN jobs j ON a.job_id = j.id
-        INNER JOIN users u ON a.user_id = u.id
-        WHERE a.applied_at BETWEEN $1 AND $2
-        ${companyFilter}
-        ORDER BY a.applied_at DESC
-      `;
+      allowNull: true
 
-      //  Run queries in parallel
-      const [jobsRes, appsRes, detailsRes] = await Promise.all([
-        pool.query(totalJobsQuery, params),
-        pool.query(applicationsQuery, params),
-        pool.query(detailedApplicationsQuery, params),
-      ]);
+    },
 
-      //  Construct report object
-      const report = {
-        period: `${start.toISOString().split("T")[0]} → ${end
-          .toISOString()
-          .split("T")[0]}`,
-        totalJobs: Number(jobsRes.rows[0]?.count || 0),
-        totalApplications: Number(appsRes.rows[0]?.total_applications || 0),
-        accepted: Number(appsRes.rows[0]?.accepted || 0),
-        rejected: Number(appsRes.rows[0]?.rejected || 0),
-        pending: Number(appsRes.rows[0]?.pending || 0),
-        applications: detailsRes.rows || [], //  individual applications
-      };
+    cv_url: { 
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    status: { 
+      type: DataTypes.ENUM("pending", "accepted", "rejected"),
+      allowNull: false,
+      defaultValue: "pending"
+    },
+    response_note: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null
 
-      res.json(report);
-    } catch (err) {
-      console.error("Error generating admin report:", err);
-      res.status(500).json({
-        message: "Error generating admin report",
-        error: (err as Error).message,
-      });
-    }
+    },
+    applied_at: { 
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    }     
+  },
+  {
+    sequelize,
+    tableName: "applications",
+    timestamps: false,
+    modelName: "applicationModel"
   }
 );
-
- //Get companies dynamically (supports ?search= & ?limit=)
-  //GET /api/admin/companies?search=google&limit=5
- 
-router.get(
-  "/companies",
-  passport.authenticate("jwt", { session: false }),
-  checkAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const search = (req.query.search as string) || "";
-      const limit = Math.min(Number(req.query.limit) || 5, 10); // Max 10
-
-      const result = await pool.query(
-        `
-        SELECT DISTINCT company
-        FROM jobs
-        WHERE company IS NOT NULL
-          AND company ILIKE $1
-        ORDER BY company ASC
-        LIMIT $2
-        `,
-        [`%${search.trim()}%`, limit]
-      );
-
-      const companies = result.rows.map((r) => r.company);
-      res.json(companies);
-    } catch (err) {
-      console.error("Error fetching companies:", err);
-      res.status(500).json({ message: "Error fetching companies" });
-    }
-  }
-);
-
-export default router;

@@ -1,0 +1,2 @@
+ALTER TABLE jobs
+ADD COLUMN IF NOT EXISTS company_id INT REFERENCES companies(company_id) ON DELETE CASCADE;

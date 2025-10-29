@@ -26,7 +26,7 @@ const ApplyJob: React.FC = () => {
       }
 
       const res = await fetch(
-        `http://localhost:3005/api/applications/${id}/apply`,
+        `http://localhost:3005/api/applications/${id}`,
         {
           method: "POST",
           headers: {

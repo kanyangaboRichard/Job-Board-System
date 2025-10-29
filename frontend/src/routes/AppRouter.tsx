@@ -13,7 +13,7 @@ import AdminDashboard from "../pages/adminDashboard";
 import ApplicationPage from "../pages/ApplicationPage";
 import MyApplicationPage from "../pages/MyApplicationPage";
 import UserManagement from "../pages/UserManagement";
-import AdminStats from "../pages/AdminStats";
+//import AdminStats from "../pages/AdminStats";
 import AdminMonthlyReport from "../pages/AdminReports";
 import MainLayout from "../layouts/mainLayout";
 
@@ -104,14 +104,6 @@ const AppRouter: React.FC = () => (
         element={
           <AdminRoute>
             <UserManagement />
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/admin/stats"
-        element={
-          <AdminRoute>
-            <AdminStats />
           </AdminRoute>
         }
       />

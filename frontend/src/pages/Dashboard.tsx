@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { jwtDecode } from "jwt-decode";
 import "./Dashboard.css"; //CSS for background
+import {getJobs} from "../api/jobs";
 
 interface Job {
   id: number;
@@ -39,7 +40,7 @@ const Dashboard: React.FC = () => {
   const [username, setUsername] = useState("User");
   const [options, setOptions] = useState<Option[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 6;
+  const jobsPerPage = 2;
 
   const token = useSelector((state: RootState) => state.auth.token);
   const navigate = useNavigate();
@@ -78,17 +79,20 @@ const Dashboard: React.FC = () => {
 
     const fetchJobs = async () => {
       try {
-        const res = await fetch("http://localhost:3005/api/jobs");
-        if (!res.ok) throw new Error("Failed to fetch jobs");
-        const data: Job[] = await res.json();
-        setJobs(data);
-        const initial = data
-          .sort((a, b) => a.title.localeCompare(b.title))
+        console.log("Fetching jobs from API...");
+        const data = await getJobs();
+        console.log("Jobs fetched:", data);
+        const jobsData = data as Job[];
+        setJobs(jobsData);
+
+        const initial = jobsData
+          .slice()
+          .sort((a: Job, b: Job) => a.title.localeCompare(b.title))
           .slice(0, 5)
-          .map((j) => ({ value: j.id, label: j.title }));
+          .map((j: Job) => ({ value: j.id, label: j.title }));
         setOptions(initial);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
+        console.error("Error fetching jobs:", err);
         setError("Failed to load jobs.");
       }
     };
@@ -129,6 +133,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="animated-bg min-vh-100">
       <div className="container mt-5 py-5">
+        
         {/* Title and Search */}
         <div className="sticky-top bg-light py-3 mb-4" style={{ zIndex: 1020 }}>
           <div className="text-center mb-2">
@@ -198,7 +203,7 @@ const Dashboard: React.FC = () => {
         <div className="row">
           {currentJobs.length > 0 ? (
             currentJobs.map((job) => {
-              const applied = appliedJobs.includes(job.id);
+              const applied = appliedJobs.includes(Number(job.id));
               return (
                 <div key={job.id} className="col-md-6 col-lg-4 mb-4">
                   <div className="card shadow-sm h-100 position-relative">
