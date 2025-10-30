@@ -11,9 +11,7 @@ export interface SendEmailParams {
 }
 
 const transporter: Transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST ?? "smtp.example.com",
-  port: process.env.EMAIL_PORT ? Number(process.env.EMAIL_PORT) : 587,
-  secure: process.env.EMAIL_SECURE === "true",
+  service: "gmail", // built-in service
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -28,7 +26,6 @@ export default async function sendEmail({
   responseNote,
 }: SendEmailParams): Promise<void> {
   const fromAddress = process.env.EMAIL_USER ?? "no-reply@example.com";
-  const ccAddress = process.env.SYSTEM_EMAIL ?? process.env.EMAIL_USER;
 
   try {
     let emailBody = `
@@ -59,10 +56,6 @@ export default async function sendEmail({
       subject: `Your Application for "${job_title}" has been ${status}`,
       html: emailBody,
     };
-
-    if (ccAddress) {
-      mailOptions.cc = ccAddress;
-    }
 
     await transporter.sendMail(mailOptions);
     console.log(` Email sent successfully to ${applicant_email}`);
