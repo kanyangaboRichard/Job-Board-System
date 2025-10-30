@@ -1,8 +1,9 @@
 // src/api/jobs.ts
 import api from "./apiClient";
 
-export const getJobs = async () => {
-  const res = await api.get("/jobs");
+
+export const getJobs = async (page= 1, limit = 6) => {
+  const res = await api.get(`/jobs?page=${page}&limit=${limit}`);
   return res.data;
 };
 
@@ -22,3 +23,5 @@ export const createJob = async (jobData: JobData) => {
   const res = await api.post("/jobs", jobData);
   return res.data;
 };
+
+

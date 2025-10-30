@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
 import { Link, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { jwtDecode } from "jwt-decode";
-import "./Dashboard.css"; //CSS for background
-import {getJobs} from "../api/jobs";
+import "./Dashboard.css";
+import { getJobs } from "../api/jobs";
 
 interface Job {
   id: number;
@@ -34,32 +34,23 @@ interface Option {
 
 const Dashboard: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [displayedJobs, setDisplayedJobs] = useState<Job[]>([]);
   const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState("User");
   const [options, setOptions] = useState<Option[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 2;
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(6); // ✅ Controls jobs shown per batch
 
   const token = useSelector((state: RootState) => state.auth.token);
   const navigate = useNavigate();
+  const limit = 6; // jobs per load
 
-  // compute search options
-  const computeOptions = (query = ""): Option[] => {
-    const normalized = query.trim().toLowerCase();
-    return jobs
-      .filter((j) =>
-        normalized ? j.title.toLowerCase().includes(normalized) : true
-      )
-      .sort((a, b) => a.title.localeCompare(b.title))
-      .slice(0, 5)
-      .map((j) => ({ value: j.id, label: j.title }));
-  };
-
+  // Decode token
   useEffect(() => {
     const storedToken = token || localStorage.getItem("token");
-
     if (storedToken) {
       try {
         const decoded = jwtDecode<DecodedToken>(storedToken);
@@ -76,64 +67,96 @@ const Dashboard: React.FC = () => {
         console.error("Error decoding token:", err);
       }
     }
-
-    const fetchJobs = async () => {
-      try {
-        console.log("Fetching jobs from API...");
-        const data = await getJobs();
-        console.log("Jobs fetched:", data);
-        const jobsData = data as Job[];
-        setJobs(jobsData);
-
-        const initial = jobsData
-          .slice()
-          .sort((a: Job, b: Job) => a.title.localeCompare(b.title))
-          .slice(0, 5)
-          .map((j: Job) => ({ value: j.id, label: j.title }));
-        setOptions(initial);
-      } catch (err) {
-        console.error("Error fetching jobs:", err);
-        setError("Failed to load jobs.");
-      }
-    };
-
-    const fetchApplications = async () => {
-      if (!storedToken) return;
-      try {
-        const res = await fetch("http://localhost:3005/api/applications/user", {
-          headers: { Authorization: `Bearer ${storedToken}` },
-        });
-        if (res.ok) {
-          const data: Application[] = await res.json();
-          setAppliedJobs(data.map((a) => a.job_id));
-        }
-      } catch {
-        console.error("Failed to load applications");
-      }
-    };
-
-    const loadData = async () => {
-      setLoading(true);
-      await Promise.all([fetchJobs(), fetchApplications()]);
-      setLoading(false);
-    };
-
-    loadData();
   }, [token]);
+
+  // Fetch all jobs once
+  const fetchJobs = useCallback(async () => {
+    try {
+      const data = await getJobs(1, 100); // ✅ Fetch all jobs once (backend paginated)
+      const jobsData = data as Job[];
+      setJobs(jobsData);
+      setDisplayedJobs(jobsData.slice(0, limit)); // show first 6 initially
+
+      // Update search options
+      setOptions(
+        jobsData.slice(0, 5).map((j) => ({ value: j.id, label: j.title }))
+      );
+    } catch (err) {
+      console.error("Error fetching jobs:", err);
+      setError("Failed to load jobs.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch user applications
+  const fetchApplications = useCallback(async () => {
+    const storedToken = token || localStorage.getItem("token");
+    if (!storedToken) return;
+
+    try {
+      const res = await fetch("http://localhost:3005/api/applications/user", {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      });
+      if (res.ok) {
+        const data: Application[] = await res.json();
+        setAppliedJobs(data.map((a) => a.job_id));
+      }
+    } catch {
+      console.error("Failed to load applications");
+    }
+  }, [token]);
+
+  // Initial load
+  useEffect(() => {
+    fetchJobs();
+    fetchApplications();
+  }, [ fetchJobs, fetchApplications ]);
+
+  // Show "Back to Top" button
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () =>
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // Load more jobs (6 at a time)
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      const newCount = visibleCount + limit;
+      setDisplayedJobs(jobs.slice(0, newCount));
+      setVisibleCount(newCount);
+      setLoadingMore(false);
+
+      // smooth scroll
+      setTimeout(() => {
+        window.scrollBy({ top: 500, behavior: "smooth" });
+      }, 200);
+    }, 400);
+  };
+
+  // Search helper
+  const computeOptions = (query = ""): Option[] => {
+    const normalized = query.trim().toLowerCase();
+    return jobs
+      .filter((j) =>
+        normalized ? j.title.toLowerCase().includes(normalized) : true
+      )
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .slice(0, 5)
+      .map((j) => ({ value: j.id, label: j.title }));
+  };
 
   if (loading) return <p className="p-4 text-muted">Loading jobs...</p>;
   if (error) return <p className="p-4 text-danger">{error}</p>;
 
-  // pagination math
-  const indexOfLast = currentPage * jobsPerPage;
-  const indexOfFirst = indexOfLast - jobsPerPage;
-  const currentJobs = jobs.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(jobs.length / jobsPerPage);
-
   return (
     <div className="animated-bg min-vh-100">
       <div className="container mt-5 py-5">
-        
         {/* Title and Search */}
         <div className="sticky-top bg-light py-3 mb-4" style={{ zIndex: 1020 }}>
           <div className="text-center mb-2">
@@ -172,7 +195,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Image banners with links */}
+        {/* Image banners */}
         <div className="d-flex flex-wrap justify-content-center align-items-center gap-4 mb-4">
           {[
             { src: "/assets/banner.jpeg", text: "Finance Jobs", link: "/category/finance" },
@@ -191,7 +214,10 @@ const Dashboard: React.FC = () => {
                 onClick={() => navigate(item.link)}
               />
               <div>
-                <Link to={item.link} className="text-primary fw-semibold small text-decoration-none">
+                <Link
+                  to={item.link}
+                  className="text-primary fw-semibold small text-decoration-none"
+                >
                   {item.text}
                 </Link>
               </div>
@@ -201,8 +227,8 @@ const Dashboard: React.FC = () => {
 
         {/* Job Cards */}
         <div className="row">
-          {currentJobs.length > 0 ? (
-            currentJobs.map((job) => {
+          {displayedJobs.length > 0 ? (
+            displayedJobs.map((job) => {
               const applied = appliedJobs.includes(Number(job.id));
               return (
                 <div key={job.id} className="col-md-6 col-lg-4 mb-4">
@@ -228,9 +254,7 @@ const Dashboard: React.FC = () => {
                         </Link>
                         {token ? (
                           <button
-                            onClick={() =>
-                              !applied && navigate(`/apply/${job.id}`)
-                            }
+                            onClick={() => !applied && navigate(`/apply/${job.id}`)}
                             className={`btn btn-sm ${
                               applied ? "btn-secondary disabled" : "btn-primary"
                             }`}
@@ -240,9 +264,7 @@ const Dashboard: React.FC = () => {
                           </button>
                         ) : (
                           <button
-                            onClick={() =>
-                              navigate(`/login?redirect=/apply/${job.id}`)
-                            }
+                            onClick={() => navigate(`/login?redirect=/apply/${job.id}`)}
                             className="btn btn-primary btn-sm"
                           >
                             Apply
@@ -261,27 +283,44 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="d-flex justify-content-center align-items-center mt-4 gap-3">
+        {/* Load More Button */}
+        {!loadingMore && displayedJobs.length < jobs.length && (
+          <div className="text-center mt-4">
             <button
-              className="btn btn-outline-primary btn-sm"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
+              className="btn btn-outline-primary px-4 py-2"
+              onClick={handleLoadMore}
             >
-              Prev
-            </button>
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              className="btn btn-outline-primary btn-sm"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-            >
-              Next
+              Load More
             </button>
           </div>
+        )}
+
+        {/* Loading spinner */}
+        {loadingMore && (
+          <div className="text-center mt-4">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Back to Top Button */}
+        {showScrollTop && (
+          <button
+            onClick={scrollToTop}
+            className="btn btn-info position-fixed"
+            style={{
+              bottom: "40px",
+              right: "40px",
+              borderRadius: "50%",
+              width: "48px",
+              height: "48px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+              zIndex: 1050,
+            }}
+          >
+            ↑
+          </button>
         )}
       </div>
     </div>

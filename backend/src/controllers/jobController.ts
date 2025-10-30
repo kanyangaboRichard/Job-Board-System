@@ -8,7 +8,14 @@ export const JobController = {
   async all(req: Request, res: Response) {
     try {
       const { title, location } = req.query;
-      const jobs = await JobService.all(title as string, location as string);
+      //pagination support
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 6;
+      const offset = (page - 1) * limit;
+
+      const jobs = await JobService.all(title as string, location as string, limit, offset);
+
+      
       res.json(jobs);
     } catch (err) {
       console.error(" Get jobs error:", err);
