@@ -61,6 +61,7 @@ export const ApplicationController = {
   async updateStatus(req: Request, res: Response) {
     const { id } = req.params;
     const { status, responseNote } = req.body;
+    
 
     try {
       const updated = await ApplicationService.updateStatus(
@@ -73,10 +74,11 @@ export const ApplicationController = {
 
       if (details.applicant_email) {
         await sendEmail({
-          to: details.applicant_email,
-          subject: "Application Status Updated",
-          body: `Dear ${details.applicant_name},\n\nYour application for "${details.job_title}" has been updated to "${status}".\n\nRegards,\nThe Hiring Team`,
-          
+          applicant_email: details.applicant_email,
+          applicant_name: details.applicant_name,
+          job_title: details.job_title,
+          status,
+          responseNote,
         } as any);
       }
 

@@ -1,0 +1,4 @@
+
+ALTER TABLE jobs ADD
+ COLUMN updated_at 
+ TIMESTAMP DEFAULT NOW();

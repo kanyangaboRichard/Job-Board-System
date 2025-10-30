@@ -61,7 +61,7 @@ export const respondToApplication = async (
   status: "accepted" | "rejected",
   responseNote?: string
 ): Promise<Application> => {
-  const res = await api.patch<ApplicationResponse>(`/applications/${id}`, {
+  const res = await api.patch<ApplicationResponse>(`/applications/${id}/status`, {
     status,
     responseNote,
   });
