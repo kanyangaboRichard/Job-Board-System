@@ -111,7 +111,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     fetchJobs();
     fetchApplications();
-  }, []);
+  }, [ fetchJobs, fetchApplications ]);
 
   // Show "Back to Top" button
   useEffect(() => {
