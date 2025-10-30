@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/store";
 import { Link, useNavigate } from "react-router-dom";
@@ -34,24 +34,21 @@ interface Option {
 
 const Dashboard: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [displayedJobs, setDisplayedJobs] = useState<Job[]>([]);
   const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fetchingMore, setFetchingMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState("User");
   const [options, setOptions] = useState<Option[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(6); // ✅ Controls jobs shown per batch
 
-  const observerRef = useRef<HTMLDivElement | null>(null);
   const token = useSelector((state: RootState) => state.auth.token);
   const navigate = useNavigate();
-  const limit = 6;
+  const limit = 6; // jobs per load
 
-  
   // Decode token
-  
   useEffect(() => {
     const storedToken = token || localStorage.getItem("token");
     if (storedToken) {
@@ -72,37 +69,26 @@ const Dashboard: React.FC = () => {
     }
   }, [token]);
 
-  
-  // Fetch paginated jobs
-  
+  // Fetch all jobs once
   const fetchJobs = useCallback(async () => {
     try {
-      setFetchingMore(true);
-      const data = await getJobs(page, limit);
+      const data = await getJobs(1, 100); // ✅ Fetch all jobs once (backend paginated)
       const jobsData = data as Job[];
-
-      //  Prevention
-      setJobs((prev) => {
-        const existingIds = new Set(prev.map((j) => j.id));
-        const newUnique = jobsData.filter((j) => !existingIds.has(j.id));
-        return [...prev, ...newUnique];
-      });
-
-      // Stop when fewer than limit are returned
-      if (jobsData.length < limit) setHasMore(false);
+      setJobs(jobsData);
+      setDisplayedJobs(jobsData.slice(0, limit)); // show first 6 initially
 
       // Update search options
-      setOptions(jobsData.slice(0, 5).map((j) => ({ value: j.id, label: j.title })));
+      setOptions(
+        jobsData.slice(0, 5).map((j) => ({ value: j.id, label: j.title }))
+      );
     } catch (err) {
       console.error("Error fetching jobs:", err);
       setError("Failed to load jobs.");
     } finally {
-      setFetchingMore(false);
       setLoading(false);
     }
-  }, [page]);
+  }, []);
 
-  
   // Fetch user applications
   const fetchApplications = useCallback(async () => {
     const storedToken = token || localStorage.getItem("token");
@@ -121,36 +107,12 @@ const Dashboard: React.FC = () => {
     }
   }, [token]);
 
-  
   // Initial load
   useEffect(() => {
     fetchJobs();
     fetchApplications();
-  }, [fetchJobs, fetchApplications]);
+  }, []);
 
-  
-  // Infinite scroll observer
-  
-  useEffect(() => {
-    if (fetchingMore || !hasMore) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setPage((p) => p + 1);
-        }
-      },
-      { threshold: 0.8 }
-    );
-
-    const currentRef = observerRef.current;
-    if (currentRef) observer.observe(currentRef);
-    return () => {
-      if (currentRef) observer.unobserve(currentRef);
-    };
-  }, [fetchingMore, hasMore]);
-
-  
   // Show "Back to Top" button
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 400);
@@ -161,9 +123,23 @@ const Dashboard: React.FC = () => {
   const scrollToTop = () =>
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-  
+  // Load more jobs (6 at a time)
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      const newCount = visibleCount + limit;
+      setDisplayedJobs(jobs.slice(0, newCount));
+      setVisibleCount(newCount);
+      setLoadingMore(false);
+
+      // smooth scroll
+      setTimeout(() => {
+        window.scrollBy({ top: 500, behavior: "smooth" });
+      }, 200);
+    }, 400);
+  };
+
   // Search helper
-  
   const computeOptions = (query = ""): Option[] => {
     const normalized = query.trim().toLowerCase();
     return jobs
@@ -175,9 +151,6 @@ const Dashboard: React.FC = () => {
       .map((j) => ({ value: j.id, label: j.title }));
   };
 
-  
-  // Render
-  
   if (loading) return <p className="p-4 text-muted">Loading jobs...</p>;
   if (error) return <p className="p-4 text-danger">{error}</p>;
 
@@ -254,8 +227,8 @@ const Dashboard: React.FC = () => {
 
         {/* Job Cards */}
         <div className="row">
-          {jobs.length > 0 ? (
-            jobs.map((job) => {
+          {displayedJobs.length > 0 ? (
+            displayedJobs.map((job) => {
               const applied = appliedJobs.includes(Number(job.id));
               return (
                 <div key={job.id} className="col-md-6 col-lg-4 mb-4">
@@ -310,15 +283,26 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Infinite scroll sentinel */}
-        <div ref={observerRef} className="text-center py-4">
-          {fetchingMore && hasMore && (
+        {/* Load More Button */}
+        {!loadingMore && displayedJobs.length < jobs.length && (
+          <div className="text-center mt-4">
+            <button
+              className="btn btn-outline-primary px-4 py-2"
+              onClick={handleLoadMore}
+            >
+              Load More
+            </button>
+          </div>
+        )}
+
+        {/* Loading spinner */}
+        {loadingMore && (
+          <div className="text-center mt-4">
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Loading...</span>
             </div>
-          )}
-          {!hasMore && <p className="text-muted">No more jobs.</p>}
-        </div>
+          </div>
+        )}
 
         {/* Back to Top Button */}
         {showScrollTop && (
