@@ -2,9 +2,9 @@
 import pool from "../config/db";
 
 export const adminReportService = {
-  // ========================
+  
   // Generate report
-  // ========================
+  
   async generate(startDate: string, endDate: string, company?: string) {
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -16,7 +16,7 @@ export const adminReportService = {
       params.push(company.trim());
     }
 
-    // 🟢 JOIN companies c ON j.company_id = c.company_id
+    //  JOIN companies c ON j.company_id = c.company_id
 
     const totalJobsQuery = `
       SELECT COUNT(*) AS count
@@ -72,9 +72,9 @@ export const adminReportService = {
     };
   },
 
-  // ========================
+
   // List distinct companies
-  // ========================
+  
   async getCompanies() {
     const query = `
       SELECT DISTINCT c.company_name
