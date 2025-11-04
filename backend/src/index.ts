@@ -4,16 +4,18 @@ import app from "./app";
 
 dotenv.config();
 
-const PORT = process.env.PORT || 3005;
+// Use Render's assigned port default to 3005 locally
+const PORT = Number(process.env.PORT) || 3005;
 
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
-      console.log(` Server running on http://localhost:${PORT}`);
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(` Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
+    console.error(" Failed to start server:", error);
     process.exit(1);
   }
 };
