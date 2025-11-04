@@ -5,7 +5,7 @@ export const JobService = {
   
   //  Get all jobs (optionally filter by title/location)
   
-  async all(title?: string, location?: string, limit?: number, offset?: number): Promise<JobAttributes[]> {
+  async all(title?: string, location?: string, _limit?: number, _offset?: number): Promise<JobAttributes[]> {
     try {
       let query = `
         SELECT 
