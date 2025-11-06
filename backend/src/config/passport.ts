@@ -51,7 +51,7 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL:
         process.env.GOOGLE_CALLBACK_URL ||
-        "http://localhost:3005/api/auth/google/callback",
+      "https://job-board-system.onrender.com/api/auth/google/callback",
     },
     async (_accessToken, _refreshToken, profile, done) => {
       try {
