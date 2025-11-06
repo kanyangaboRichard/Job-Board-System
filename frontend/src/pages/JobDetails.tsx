@@ -22,7 +22,7 @@ const JobDetails: React.FC = () => {
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const res = await fetch(`https://job-board-system.onrender.com/api/jobs/${id}`);
+        const res = await fetch(`http://localhost:3005/api/jobs/${id}`);
         if (!res.ok) throw new Error(`Failed to fetch job (${res.status})`);
         const data = await res.json();
         setJob(data);

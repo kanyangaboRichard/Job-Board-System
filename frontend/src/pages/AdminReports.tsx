@@ -66,7 +66,7 @@ const AdminReport: React.FC = () => {
       if (company.trim()) query.append("company", company.trim());
 
       const res = await axios.get<ReportData>(
-        `https://job-board-system.onrender.com/api/admin/reports?${query.toString()}`,
+        `http://localhost:3005/api/admin/reports?${query.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -95,7 +95,7 @@ const AdminReport: React.FC = () => {
 
     try {
       const res = await axios.get<string[] | CompaniesResponse[]>(
-        `https://job-board-system.onrender.com/api/admin/reports/companies?search=${inputValue}`,
+        `http://localhost:3005/api/admin/reports/companies?search=${inputValue}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

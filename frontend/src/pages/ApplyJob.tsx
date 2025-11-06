@@ -26,7 +26,7 @@ const ApplyJob: React.FC = () => {
       }
 
       const res = await fetch(
-        `https://job-board-system.onrender.com/api/applications/${id}`,
+        `http://localhost:3005/api/applications/${id}`,
         {
           method: "POST",
           headers: {

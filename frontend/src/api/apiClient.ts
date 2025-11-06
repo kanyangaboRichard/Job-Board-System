@@ -2,7 +2,7 @@
 import axios from "axios";
 
 // Use Vite environment variable or fallback
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://job-board-system.onrender.com/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3005/api";
 
 // Create shared Axios instance
 export const api = axios.create({
