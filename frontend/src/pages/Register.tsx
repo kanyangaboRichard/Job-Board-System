@@ -32,7 +32,7 @@ const Register: React.FC = () => {
   const handleGoogleRegister = () => {
     const redirect =
       new URLSearchParams(location.search).get("redirect") || "/";
-    window.location.href = `http://localhost:3005/api/auth/google?redirect=${redirect}`;
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google?redirect=${redirect}`;
   };
 
   return (
