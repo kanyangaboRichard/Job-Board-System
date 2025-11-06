@@ -39,7 +39,7 @@ const UserManagement: React.FC = () => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const res = await fetch("http://localhost:3005/api/users", {
+        const res = await fetch("https://job-board-system.onrender.com/api/users", {
           method: "GET",
           headers: getAuthHeaders(),
         });
@@ -96,7 +96,7 @@ const UserManagement: React.FC = () => {
   // 🛠 Promote a user to admin
   const handleMakeAdmin = async (id: number | string) => {
     try {
-      const res = await fetch(`http://localhost:3005/api/users/${id}/make-admin`, {
+      const res = await fetch(`https://job-board-system.onrender.com/api/users/${id}/make-admin`, {
         method: "PATCH",
         headers: getAuthHeaders(),
       });
@@ -120,7 +120,7 @@ const UserManagement: React.FC = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:3005/api/users/${id}/revoke-admin`, {
+      const res = await fetch(`https://job-board-system.onrender.com/api/users/${id}/revoke-admin`, {
         method: "PATCH",
         headers: getAuthHeaders(),
       });

@@ -95,7 +95,7 @@ const Dashboard: React.FC = () => {
     if (!storedToken) return;
 
     try {
-      const res = await fetch("http://localhost:3005/api/applications/user", {
+      const res = await fetch("https://job-board-system.onrender.com/api/applications/user", {
         headers: { Authorization: `Bearer ${storedToken}` },
       });
       if (res.ok) {

@@ -59,7 +59,7 @@ const Login: React.FC = () => {
 
   // Google login
   const handleGoogleLogin = () => {
-    window.location.href = `http://localhost:3005/api/auth/google?redirect=${encodeURIComponent(
+    window.location.href = `https://job-board-system.onrender.com/api/auth/google?redirect=${encodeURIComponent(
       redirect
     )}`;
   };

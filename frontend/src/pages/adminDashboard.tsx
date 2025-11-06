@@ -79,7 +79,7 @@ const AdminDashboard: React.FC = () => {
     if (!token) return;
     const fetchJobs = async () => {
       try {
-        const res = await fetch("http://localhost:3005/api/jobs", {
+        const res = await fetch("https://job-board-system.onrender.com/api/jobs", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch jobs");
@@ -106,7 +106,7 @@ const AdminDashboard: React.FC = () => {
     if (!token) return;
     const fetchCompanies = async () => {
       try {
-        const res = await fetch("http://localhost:3005/api/companies", {
+        const res = await fetch("https://job-board-system.onrender.com/api/companies", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch companies");
@@ -125,7 +125,7 @@ const AdminDashboard: React.FC = () => {
     const fetchStats = async () => {
       try {
         const res = await axios.get<Stats>(
-          "http://localhost:3005/api/admin/stats",
+          "https://job-board-system.onrender.com/api/admin/stats",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setStats(res.data);
@@ -187,8 +187,8 @@ const AdminDashboard: React.FC = () => {
     try {
       const method = editingJob ? "PATCH" : "POST";
       const url = editingJob
-        ? `http://localhost:3005/api/jobs/${editingJob.id}`
-        : "http://localhost:3005/api/jobs";
+        ? `https://job-board-system.onrender.com/api/jobs/${editingJob.id}`
+        : "https://job-board-system.onrender.com/api/jobs";
 
       const body = JSON.stringify({
         title,
@@ -232,7 +232,7 @@ const AdminDashboard: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
 
     try {
-      const res = await fetch(`http://localhost:3005/api/jobs/${id}`, {
+      const res = await fetch(`https://job-board-system.onrender.com/api/jobs/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -458,7 +458,7 @@ const AdminDashboard: React.FC = () => {
                     onCreateOption={async (inputValue) => {
                       try {
                         const res = await fetch(
-                          "http://localhost:3005/api/companies",
+                          "https://job-board-system.onrender.com/api/companies",
                           {
                             method: "POST",
                             headers: {
