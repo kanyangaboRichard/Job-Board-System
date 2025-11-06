@@ -59,7 +59,7 @@ const Login: React.FC = () => {
 
   // Google login
   const handleGoogleLogin = () => {
-    window.location.href = `http://localhost:3005/api/auth/google?redirect=${encodeURIComponent(
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google?redirect=${encodeURIComponent(
       redirect
     )}`;
   };
