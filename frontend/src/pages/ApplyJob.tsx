@@ -26,7 +26,7 @@ const ApplyJob: React.FC = () => {
       }
 
       const res = await fetch(
-        `http://localhost:3005/api/applications/${id}`,
+        `${import.meta.env.VITE_API_URL}/applications/${id}`,
         {
           method: "POST",
           headers: {

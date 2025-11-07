@@ -79,7 +79,7 @@ const AdminDashboard: React.FC = () => {
     if (!token) return;
     const fetchJobs = async () => {
       try {
-        const res = await fetch("http://localhost:3005/api/jobs", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/jobs`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch jobs");
@@ -106,7 +106,7 @@ const AdminDashboard: React.FC = () => {
     if (!token) return;
     const fetchCompanies = async () => {
       try {
-        const res = await fetch("http://localhost:3005/api/companies", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/companies`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch companies");
@@ -125,7 +125,7 @@ const AdminDashboard: React.FC = () => {
     const fetchStats = async () => {
       try {
         const res = await axios.get<Stats>(
-          "http://localhost:3005/api/admin/stats",
+          `${import.meta.env.VITE_API_URL}/admin/stats`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setStats(res.data);
@@ -187,8 +187,8 @@ const AdminDashboard: React.FC = () => {
     try {
       const method = editingJob ? "PATCH" : "POST";
       const url = editingJob
-        ? `http://localhost:3005/api/jobs/${editingJob.id}`
-        : "http://localhost:3005/api/jobs";
+        ? `${import.meta.env.VITE_API_URL}/jobs/${editingJob.id}`
+        : `${import.meta.env.VITE_API_URL}/jobs`;
 
       const body = JSON.stringify({
         title,
@@ -458,7 +458,7 @@ const AdminDashboard: React.FC = () => {
                     onCreateOption={async (inputValue) => {
                       try {
                         const res = await fetch(
-                          "http://localhost:3005/api/companies",
+                          `${import.meta.env.VITE_API_URL}/companies`,
                           {
                             method: "POST",
                             headers: {

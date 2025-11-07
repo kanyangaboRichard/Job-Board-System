@@ -2,7 +2,7 @@
 import axios from "axios";
 
 // Use Vite environment variable or fallback
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3005/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.API_URL}`;
 
 // Create shared Axios instance
 export const api = axios.create({

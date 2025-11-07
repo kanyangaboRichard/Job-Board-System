@@ -66,7 +66,7 @@ const AdminReport: React.FC = () => {
       if (company.trim()) query.append("company", company.trim());
 
       const res = await axios.get<ReportData>(
-        `http://localhost:3005/api/admin/reports?${query.toString()}`,
+        `${import.meta.env.VITE_API_URL}/admin/reports?${query.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -95,7 +95,7 @@ const AdminReport: React.FC = () => {
 
     try {
       const res = await axios.get<string[] | CompaniesResponse[]>(
-        `http://localhost:3005/api/admin/reports/companies?search=${inputValue}`,
+        `${import.meta.env.VITE_API_URL}/companies/search?query=${encodeURIComponent(inputValue)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

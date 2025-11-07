@@ -27,7 +27,7 @@ const ReportPages: React.FC = () => {
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        const res = await axios.get<ReportData>("http://localhost:3005/api/admin/monthly-report", {
+        const res = await axios.get<ReportData>(`${import.meta.env.VITE_API_URL}/admin/monthly-report`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setReport(res.data);
