@@ -1,30 +1,32 @@
 {
   "compilerOptions": {
     /* Basic Options */
-    "target": "ESNext",                     // Modern JavaScript output
-    "module": "NodeNext",                   // Use ESM with Node
-    "moduleResolution": "NodeNext",         // Resolve ESM modules
-    "rootDir": "./src",                     // Source files folder
-    "outDir": "./dist",                     // Compiled JS output
-    "esModuleInterop": true,                // Import CJS packages cleanly
-    "allowSyntheticDefaultImports": true,   // Allow default imports from CJS
+    "target": "ES6",                      // Output modern JavaScript for Node
+    "module": "CommonJS",                 // Use CommonJS for Express & Passport
+    "moduleResolution": "node",           // Standard Node.js module resolution
+    "rootDir": "./src",                   // Source folder
+    "outDir": "./dist",                   // Build output folder
+
+    /* Interop & Type Support */
+    "esModuleInterop": true,              // Allow default imports from CommonJS
+    "allowSyntheticDefaultImports": true, // Fix "has no default export" errors
     "forceConsistentCasingInFileNames": true,
-    "strict": true,                         // Enable all strict type-checking options
-    "skipLibCheck": true,                   // Skip type checks in node_modules
+    "strict": true,                       // Enable all strict type checking
+    "skipLibCheck": true,                 // Skip type checks in node_modules
+
+    /* Debugging & Declarations */
+    "sourceMap": true,                    // Generate source maps for debugging
+    "declaration": true,                  // Generate .d.ts files for JS output
+
+    /* Type Definitions */
+    "types": ["node", "express"],         // Load only Node + Express types
 
     /* Advanced Options */
-    "isolatedModules": true,                // Needed for ts-node / transpile only
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-
-    /* Source Maps & Declarations */
-    "sourceMap": true,                      // Generate source maps for debugging
-    "declaration": true,                    // Generate .d.ts files
-    "declarationMap": true,                 // Map .d.ts to original TS
-    "typeRoots": ["./src/types", "./node_modules/@types"]
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
