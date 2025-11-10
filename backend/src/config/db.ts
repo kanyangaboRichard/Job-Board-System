@@ -3,12 +3,14 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const useSSL = process.env.USE_SSL === "true" || process.env.NODE_ENV === "production";
+
 const { Pool } = pg;
 
 // Prefer DATABASE_URL when available (Render)
 const pool = new Pool(
-  process.env.DATABASE_URL
-    ? {
+  process.env.DATABASE_URL && useSSL
+     ?{
         connectionString: process.env.DATABASE_URL,
         ssl: { rejectUnauthorized: false },
       }
