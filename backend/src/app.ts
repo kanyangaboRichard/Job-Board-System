@@ -33,7 +33,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3001", // Frontend origin (adjust for prod)
-      "https://job-board-system-8usg-d6ofl61rp-richards-projects-cdb41f5a.vercel.app", // Vercel production URL
+      "http://job-board-system-8usg.vercel.app", // Vercel production URL
     ],
     credentials: true, // Allow cookies & auth headers
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
