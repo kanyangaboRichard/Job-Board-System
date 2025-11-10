@@ -51,8 +51,8 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL:
         process.env.NODE_ENV === "production"
-          ? "https://localhost:3005/api/auth/google/callback"
-          : "https://job-board-system-silk.vercel.app/api/auth/google/callback",
+          ? "https://job-board-system-silk.vercel.app/api/auth/google/callback"
+          : "http://localhost:3005/api/auth/google/callback",
     },
     async (_accessToken, _refreshToken, profile, done) => {
       try {
