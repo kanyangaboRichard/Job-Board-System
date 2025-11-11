@@ -34,6 +34,9 @@ app.use(
     origin: [
       "http://localhost:3001", // Frontend origin (adjust for prod)
        "https://job-board-system-8usg-e84wiu698-richards-projects-cdb41f5a.vercel.app", // Vercel production URL
+       "https://job-board-system-8usg.vercel.app/", // Vercel production URL2
+       "https://job-board-system-8usg-h8zx04cfy-richards-projects-cdb41f5a.vercel.app", // Vercel preview URL
+
     ],
     credentials: true, // Allow cookies & auth headers
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
