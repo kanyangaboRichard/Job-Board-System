@@ -36,7 +36,7 @@ app.use(
        "https://job-board-system-8usg.vercel.app",
        "https://job-board-system-8usg-e84wiu698-richards-projects-cdb41f5a.vercel.app", // Vercel production URL
        "https://job-board-system-silk.vercel.app", // Vercel backend itself URL
-        
+        "https://job-board-system-8usg-7b91hov7p-richards-projects-cdb41f5a.vercel.app", 
     ],
     credentials: true, // Allow cookies & auth headers
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
