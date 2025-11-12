@@ -8,7 +8,7 @@ const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
 
-// Local Register
+// local Registration
 
 router.post("/register", async (req, res) => {
   try {
@@ -43,7 +43,7 @@ router.post("/register", async (req, res) => {
 });
 
 
-// Local Login (Fixed)
+// local login
 
 router.post("/login", async (req, res) => {
   try {
@@ -79,28 +79,49 @@ router.post("/login", async (req, res) => {
 });
 
 
-// Google OAuth start
+// google auth Start
 
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
 
-// Google OAuth callback
+
+// google call back
 
 router.get(
   "/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: "/login",
+    failureRedirect: `${process.env.FRONTEND_URL || "https://job-board-system-8usg.vercel.app"}/login`,
   }),
   (req, res) => {
-    const user = req.user as { id: number; email: string; role: string };
-    const token = jwt.sign(
-      { id: user.id, role: user.role, email: user.email },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    try {
+      const user = req.user as { id: number; email: string; role: string };
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3001";
-    res.redirect(`${frontendUrl}/?token=${token}`);
+      // Generate JWT for the logged-in user
+      const token = jwt.sign(
+        { id: user.id, role: user.role, email: user.email },
+        JWT_SECRET,
+        { expiresIn: "7d" }
+      );
+
+      // Use frontend URL from environment or fallback to your production frontend
+      const frontendUrl =
+        process.env.FRONTEND_URL || "https://job-board-system-8usg.vercel.app";
+
+      // Support optional redirect query (?redirect=/dashboard)
+      const redirectPath =
+        typeof req.query.redirect === "string" ? req.query.redirect : "/";
+
+      // Redirect back to frontend with token
+      res.redirect(`${frontendUrl}${redirectPath}?token=${token}`);
+    } catch (error) {
+      console.error("Google OAuth callback error:", error);
+      res.redirect(
+        `${process.env.FRONTEND_URL || "https://job-board-system-8usg.vercel.app"}/login`
+      );
+    }
   }
 );
 
