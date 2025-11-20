@@ -73,3 +73,24 @@ Deployment
 Deploy PostgreSQL database on Neon
 Add all backend .env variables
 Add Vercel domain to CORS
+
+Frontend on Vercel
+Import GitHub repository
+Add .env variables
+Build command:
+
+PDF Reporting (Admin)
+Total jobs created
+Total applications
+Accepted vs rejected
+Filter by company
+Download as PDF
+
+Email Notifications
+Sent when:
+Application submitted
+Application accepted
+Application rejected (with reason)
+
+ Testing
+Backend (Jest + Supertest)
